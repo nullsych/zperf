@@ -8,7 +8,7 @@
 #include <device.h>
 #include <devicetree.h>
 #include <drivers/gpio.h>
-// #include <logging/log.h>
+#include <debug/thread_analyzer.h>
 
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS 500u
@@ -113,6 +113,12 @@ void main(void)
 	k_thread_name_set(&Task_Blink_LED0__data, "Task_Blink_LED0");
 
    k_thread_start(&Task_Blink_LED0__data);
+
+   while (1)
+   {
+      thread_analyzer_print();
+      k_msleep(1000);
+   }
 }
 
 /* EOF */
