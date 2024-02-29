@@ -9,6 +9,7 @@
 #include <devicetree.h>
 #include <drivers/gpio.h>
 #include <debug/thread_analyzer.h>
+#include <tracing/tracing.h>
 
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS 500u
