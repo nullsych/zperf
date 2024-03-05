@@ -76,12 +76,98 @@ const struct device *Device_getLedDevice(const char *LED, uint8_t PIN, uint32_t 
    return dev;
 }
 
+void sys_port_trace_pm_system_suspend_enter(uint32_t ticks)
+{
+}
+
+void sys_port_trace_pm_system_suspend_exit(uint32_t ticks, uint32_t ret)
+{
+}
+
+void sys_port_trace_pm_device_request_enter(const struct device *dev, uint32_t target_state)
+{
+}
+
+void sys_port_trace_pm_device_request_exit(const struct device *dev, uint32_t ret)
+{
+}
+
+void sys_trace_thread_abort_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_abort_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_suspend_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_suspend_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_resume_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_resume_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_name_set_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_name_set_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_switched_in_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_switched_in_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_switched_out_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_switched_out_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_info_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_info_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_sched_ready_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_sched_ready_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_pend_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_pend_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_thread_priority_set_user(struct k_thread *thread, int prio)
+{
+   printk("# TRACE ############ sys_trace_thread_priority_set_user: Thread %s\n", thread->name);
+}
+
+void sys_trace_isr_enter_user()
+{
+   printk("# TRACE ############ sys_trace_isr_enter_user\n");
+}
+
+void sys_trace_isr_exit_user(void)
+{
+   printk("# TRACE ############ sys_trace_isr_exit_user\n");
+}
+
+void sys_trace_idle_user(void)
+{
+   printk("# TRACE ############ sys_trace_idle_user\n");
+}
+
+void sys_trace_thread_create_user(struct k_thread *thread)
+{
+   printk("# TRACE ############ sys_trace_thread_create_user: Thread %s created!\n", thread->name);
+}
+
 void Blink_LED(const struct device *dev, uint8_t PIN)
 {
    bool led_is_on = true;
    while (1)
    {
-      printk("Task_Blink_LED0 : GPIO state: %d", led_is_on);
+      printk("Task_Blink_LED0 : GPIO state: %d\n", led_is_on);
       gpio_pin_set(dev, PIN, (int)led_is_on);
       led_is_on = !led_is_on;
       k_msleep(SLEEP_TIME_MS);
@@ -90,9 +176,9 @@ void Blink_LED(const struct device *dev, uint8_t PIN)
 
 void TASK_Blink_LED0(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
-	ARG_UNUSED(unused_arg1);
-	ARG_UNUSED(unused_arg2);
-	ARG_UNUSED(unused_arg3);
+   ARG_UNUSED(unused_arg1);
+   ARG_UNUSED(unused_arg2);
+   ARG_UNUSED(unused_arg3);
 
    Blink_LED(dev_led0, PIN0);
 }
@@ -107,19 +193,21 @@ void main(void)
    }
 
    k_thread_create(&Task_Blink_LED0__data, Task_Blink_LED0___stack_area,
-			K_THREAD_STACK_SIZEOF(Task_Blink_LED0___stack_area),
-			TASK_Blink_LED0, NULL, NULL, NULL,
-			PRIORITY, 0, K_FOREVER);
+                   K_THREAD_STACK_SIZEOF(Task_Blink_LED0___stack_area),
+                   TASK_Blink_LED0, NULL, NULL, NULL,
+                   PRIORITY, 0, K_FOREVER);
 
-	k_thread_name_set(&Task_Blink_LED0__data, "Task_Blink_LED0");
+   k_thread_name_set(&Task_Blink_LED0__data, "Task_Blink_LED0");
 
    k_thread_start(&Task_Blink_LED0__data);
 
+/*
    while (1)
    {
       thread_analyzer_print();
       k_msleep(1000);
    }
+*/
 }
 
 /* EOF */
