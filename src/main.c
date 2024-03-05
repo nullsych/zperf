@@ -11,6 +11,9 @@
 #include <debug/thread_analyzer.h>
 #include <tracing/tracing.h>
 
+#include <SysPerf.h>
+#include <SysPerf_RTOS_Wrapper.h>
+
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS 500u
 
@@ -110,16 +113,6 @@ void sys_trace_thread_resume_user(struct k_thread *thread)
 void sys_trace_thread_name_set_user(struct k_thread *thread)
 {
    printk("# TRACE ############ sys_trace_thread_name_set_user: Thread %s\n", thread->name);
-}
-
-void sys_trace_thread_switched_in_user(struct k_thread *thread)
-{
-   printk("# TRACE ############ sys_trace_thread_switched_in_user: Thread %s\n", thread->name);
-}
-
-void sys_trace_thread_switched_out_user(struct k_thread *thread)
-{
-   printk("# TRACE ############ sys_trace_thread_switched_out_user: Thread %s\n", thread->name);
 }
 
 void sys_trace_thread_info_user(struct k_thread *thread)
