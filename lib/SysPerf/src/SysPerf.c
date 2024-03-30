@@ -6,13 +6,102 @@
 
 #include "SysPerf.h"
 
+static uint32 SysPerf__GetTaskRuntime(uint8 taskId, uint32 timeStamp);
+
+static uint32 SysPerf__GetUptimeTimestamp(void);
+
+static uint8 SysPerf__GetTaskId(void);
+
+static sp_EpochStat_t EpochStatistic;
+
+static sp_UptimeStat_t UptimeStatistic;
+
 /* SysPerf Hooks Implementation */
 void SysPerf__PreTaskHook(sp_TaskPtr task)
 {
-   SP_TRACE("# ====== SysPerf__PreTaskHook: Task %s\n", task->name);
+   uint32 preTaskTimestamp_uS;
+   uint8 taskId;
+
+   taskId = SysPerf__GetTaskId();
+
+   // SP_TRACE("# ====== SysPerf__PreTaskHook: Task %s\n", task->name);
+   // SP_TRACE("# ====== SysPerf__PreTaskHook: taskId %d\n", taskId);
+
+   if (taskId < SYSPERF_TASK_NUM)
+   {
+      preTaskTimestamp_uS = SysPerf__GetUptimeTimestamp();
+      EpochStatistic.TasksRuntime[taskId].taskTimestamp = preTaskTimestamp_uS;
+   }
+   /*
+       k_thread_runtime_stats_t rt_stats_thread;
+       k_thread_runtime_stats_get(k_current_get(), &rt_stats_thread);
+       printk("Cycles: %llu\n", rt_stats_thread.execution_cycles);
+   */
 }
 
 void SysPerf__PostTaskHook(sp_TaskPtr task)
 {
-   SP_TRACE("# ====== SysPerf__PostTaskHook: Task %s\n", task->name);
+   uint32 postTaskTimestamp_uS, taskRuntime_uS;
+   uint8 taskId;
+
+   taskId = SysPerf__GetTaskId();
+
+   // SP_TRACE("# ====== SysPerf__PreTaskHook: Task %s\n", task->name);
+   // SP_TRACE("# ====== SysPerf__PreTaskHook: taskId %d\n", taskId);
+
+   if (taskId < SYSPERF_TASK_NUM)
+   {
+      postTaskTimestamp_uS = SysPerf__GetUptimeTimestamp();
+      taskRuntime_uS = SysPerf__GetTaskRuntime(taskId, postTaskTimestamp_uS);
+
+      EpochStatistic.TasksRuntime[taskId].taskTimestamp = postTaskTimestamp_uS;
+      EpochStatistic.TasksRuntime[taskId].totalRuntime += taskRuntime_uS;
+      EpochStatistic.TasksRuntime[taskId].taskSwitches++;
+
+      SP_TRACE("# ====== Task name: %s, Timestamp = %u [uS], Runtime = %u [uS]\n", task->name, postTaskTimestamp_uS, taskRuntime_uS);
+
+      UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime_uS;
+   }
+}
+
+static uint32 SysPerf__GetTaskRuntime(uint8 taskId, uint32 timeStamp)
+{
+   uint32 taskRuntime, prevTaskTimeStamp;
+   prevTaskTimeStamp = EpochStatistic.TasksRuntime[taskId].taskTimestamp;
+   taskRuntime = (timeStamp > prevTaskTimeStamp) ? (timeStamp - prevTaskTimeStamp) : (timeStamp + (MAP_RTOS_UPTIME_TOP - prevTaskTimeStamp));
+   return taskRuntime;
+}
+
+static uint32 SysPerf__GetUptimeTimestamp(void)
+{
+   uint32 timeStamp;
+   timeStamp = k_uptime_ticks();
+   timeStamp = k_ticks_to_us_near32((uint32)timeStamp);
+   return timeStamp; /* in uS*/
+}
+
+static uint8 SysPerf__GetTaskId()
+{
+   return (uint8)k_thread_custom_data_get();
+}
+
+/**
+ * @brief Trace Tasks & ISRs runtime statistic per 1 second. This function need to be called each 1 second.
+ */
+void SysPerf__OneSecondStatistics(void)
+{
+   uint32 timeStamp;
+
+   timeStamp = SysPerf__GetUptimeTimestamp();
+
+   SP_TRACE("# #####################   1 Second System Perfomance   ####################### #");
+   SP_TRACE("# Task Name         #   Total runtime  #    Max runtime   #   Total Switches   #");
+
+   for (uint8 taskId = 0; taskId < SYSPERF_TASK_NUM; taskId++)
+   {
+      SP_TRACE("# Task_Blink_LED0   #    %s    #    %u    #    %u      #",
+               EpochStatistic.TasksRuntime[taskId].taskName, EpochStatistic.TasksRuntime[taskId].totalRuntime,
+               EpochStatistic.TasksRuntime[taskId].taskSwitches);
+   }
+   SP_TRACE("# ############################################################################ #");
 }

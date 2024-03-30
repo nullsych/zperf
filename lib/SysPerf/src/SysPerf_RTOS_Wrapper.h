@@ -15,7 +15,7 @@ Template:
 
     Hook_Function (...)
     {
-        SysPerf__PreTaskHook(...);
+        SysPerf__Hook(...);
     }
 */
 
