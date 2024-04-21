@@ -33,11 +33,9 @@ def serial_ports():
             pass
     return result
 
-
 WORK_PORT = serial_ports()[0]
 
 serialPort = serial.Serial(port=WORK_PORT, baudrate=115200, timeout=.1)
-# serialPort = Serial(port='COM3', baudrate=115200, timeout=.1)
 
 serialString = ""
 
@@ -49,7 +47,7 @@ while(1):
             # Read data out of the buffer until a carraige return / new line is found
             serialString = serialPort.readline()
             # Print the contents of the serial data
-            print(serialString.decode('Ascii'))
+            print(serialString.decode('Ascii'), end='')
 
     except KeyboardInterrupt:
         print("\nCtrl-C, exiting..")

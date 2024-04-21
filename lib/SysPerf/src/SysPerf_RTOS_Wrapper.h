@@ -21,12 +21,12 @@ Template:
 
 void sys_trace_thread_switched_in_user(struct k_thread *thread)
 {
-    SysPerf__PreTaskHook((sp_TaskPtr)thread);
+    // SysPerf__PreTaskHook((sp_TaskPtr)thread);
 }
 
 void sys_trace_thread_switched_out_user(struct k_thread *thread)
 {
-    SysPerf__PostTaskHook((sp_TaskPtr)thread);
+    // SysPerf__PostTaskHook((sp_TaskPtr)thread);
 }
 
 #endif /* __SYSPERF_RTOS_WRAPPER_H__ */
