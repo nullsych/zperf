@@ -2,7 +2,7 @@
 #include <debug/thread_analyzer.h>
 #include <tracing/tracing.h>
 
-#include "ApplTasks.h"
+#include "TasksCfg.h"
 #include "ApplDevicetree.h"
 
 K_THREAD_STACK_DEFINE(LED_Task_stack_area, LED_TASK_STACKSIZE);

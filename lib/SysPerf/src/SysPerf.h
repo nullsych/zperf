@@ -6,6 +6,8 @@
 *******************************************************************************************************************/
 /** @details: Include necessary headers **/
 #include <zephyr.h>
+// #define LOG_LEVEL LOG_LEVEL_DBG
+// #define LOG_MODULE_NAME SysPerf
 #include <logging/log.h>
 
 

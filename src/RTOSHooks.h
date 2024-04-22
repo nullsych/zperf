@@ -8,13 +8,13 @@ void sys_port_trace_pm_system_suspend_exit(uint32_t ticks, uint32_t ret)
 {
 }
 
-void sys_port_trace_pm_device_request_enter(const struct device *dev, uint32_t target_state)
-{
-}
+// void sys_port_trace_pm_device_request_enter(const struct device *dev, uint32_t target_state)
+// {
+// }
 
-void sys_port_trace_pm_device_request_exit(const struct device *dev, uint32_t ret)
-{
-}
+// void sys_port_trace_pm_device_request_exit(const struct device *dev, uint32_t ret)
+// {
+// }
 
 void sys_trace_thread_abort_user(struct k_thread *thread)
 {
