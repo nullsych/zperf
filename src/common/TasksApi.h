@@ -6,6 +6,7 @@
 
 void Led_createTask(void);
 void Ble_createTask(void);
+void SysPerf_createTask(void);
 // void ApplTasks__startThreadAnalyzer(void);
 
 #endif /* __COMMON_TASKS_API_H__ */

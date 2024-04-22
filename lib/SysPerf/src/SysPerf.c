@@ -2,13 +2,6 @@
  *                                             RTOS-SPECIFIC HEADERS                                                *
  *******************************************************************************************************************/
 #include <zephyr.h>
-// #define LOG_LEVEL LOG_LEVEL_DBG
-// #define LOG_MODULE_NAME SysPerf
-
-// #ifdef LOG_LEVEL
-// #undef LOG_LEVEL
-// #define LOG_LEVEL LOG_LEVEL_DBG
-// #endif
 #include <logging/log.h>
 LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 

@@ -9,21 +9,17 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/uuid.h>
 
-/* SysPerf runtime analysis headers */
-#include <SysPerf.h>
-#include <SysPerf_RTOS_Wrapper.h>
-
 /* Application related headers */
 #include "common/Leds/Leds.h"
 #include "common/TasksCfg.h"
 #include "common/TasksApi.h"
 
+/* SysPerf's hooks, used under Zephyr's hooks */
+#include <SysPerf_RTOS_Wrapper.h>
+
 /* Rest of Zephyr's unsused hooks */
 #include "RTOSHooks.h"
 
-#include <zephyr.h>
-// #define LOG_LEVEL LOG_LEVEL_DBG
-// #define LOG_MODULE_NAME Nrf52
 #include <logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
@@ -35,20 +31,7 @@ void main(void)
 
    Ble_createTask();
 
-   // ApplTasks__createApplTasks();
-
-   // ApplTasks__startApplTasks();
-
-   /* Demo for SysPerf to get runtime statistic per last 1 second */
-   // while (1)
-   // {
-   // SysPerf__EpochOverallStatistic();
-   // LOG_DBG("Verbose debug %d", 3);
-   // LOG_INF("Everything is fine, mask=0x%x", 0xa1);
-   // LOG_WRN("Warning: %s was seen", "something bad");
-   // LOG_ERR("Error %d", 3);
-   // k_msleep(1000);
-   // }
+   SysPerf_createTask();
 }
 
 /* EOF */
