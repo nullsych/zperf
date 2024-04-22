@@ -1,0 +1,50 @@
+#include <zephyr.h>
+#include <debug/thread_analyzer.h>
+#include <tracing/tracing.h>
+
+#include "common/TasksCfg.h"
+#include "common/Leds/Leds.h"
+
+K_THREAD_STACK_DEFINE(LED_Task_stack_area, LED_TASK_STACKSIZE);
+static struct k_thread Led_zthread_data;
+static k_tid_t Led_zid;
+static uint8_t Led_taskId = LED_TASKID;
+
+static void Task_LED(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+{
+   ARG_UNUSED(unused_arg1);
+   ARG_UNUSED(unused_arg2);
+   ARG_UNUSED(unused_arg3);
+
+   k_thread_custom_data_set((void *)Led_taskId);
+
+   Led_toggle0(LED_TASK_PERIOD);
+}
+
+void Led_createTask(void)
+{
+   Led_zid = k_thread_create(&Led_zthread_data, LED_Task_stack_area,
+                             K_THREAD_STACK_SIZEOF(LED_Task_stack_area),
+                             Task_LED, NULL, NULL, NULL,
+                             LED_TASK_PRIORITY, 0, K_FOREVER);
+
+   k_thread_name_set(Led_zid, "Task_LED");
+
+   k_thread_start(Led_zid);
+}
+
+/**
+ * @brief Start a Thread Analyzer as separate thread to get a little runtime statistics.
+ */
+/*
+void ThreadAnalyzerTask(void)
+{
+   while (1)
+   {
+      thread_analyzer_print();
+      k_msleep(1000);
+   }
+}
+*/
+
+/* EOF */

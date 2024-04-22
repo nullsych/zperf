@@ -14,9 +14,9 @@
 #include <SysPerf_RTOS_Wrapper.h>
 
 /* Application related headers */
-#include "ApplDevicetree.h"
-#include "TasksCfg.h"
-#include "TasksApi.h"
+#include "common/Leds/Leds.h"
+#include "common/TasksCfg.h"
+#include "common/TasksApi.h"
 
 /* Rest of Zephyr's unsused hooks */
 #include "RTOSHooks.h"
@@ -29,10 +29,11 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 void main(void)
 {
+   Led_init0();
 
-   BleTask_main();
+   Led_createTask();
 
-   // DeviceTree__initLeds();
+   Ble_createTask();
 
    // ApplTasks__createApplTasks();
 
