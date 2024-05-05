@@ -97,26 +97,16 @@ static uint8 SysPerf__GetTaskId()
  */
 void SysPerf__EpochOverallStatistic(void)
 {
-   uint32 timeStamp;
-
-   timeStamp = SysPerf__GetUptimeTimestamp();
+   // uint32 timeStamp;
+   // timeStamp = SysPerf__GetUptimeTimestamp();
 
    SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
+   SP_TRACE_INFO("#                                                                              #");
    SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
-
-   // SP_TRACE_INFO("#     %3u                %6u         Max runtime        Total Switches    #");
 
    for (uint8 taskId = 0; taskId < 10; taskId++)
    {
-      // SP_TRACE_INFO("#      %-4u      #       %14u      #       %12u      #          %8u        #", 
-
-      // SP_TRACE_INFO("# "
-                  //   11, 123, 524,
-                  //   565);
-
-                  //   taskId, EpochStatistic.TasksRuntime[taskId].totalRuntime,
-                  //   EpochStatistic.TasksRuntime[taskId].totalRuntime,
-                  //   EpochStatistic.TasksRuntime[taskId].taskSwitches);
+      SP_TRACE_INFO("#     %2u           %10u            %10u          %10u        #", 0, 31445, 46345, 4545);
    }
    SP_TRACE_INFO("# ############################################################################ #\n");
 }
