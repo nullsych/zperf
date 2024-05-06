@@ -1,3 +1,11 @@
+/**
+ * @file   SysPerf.h
+ * @brief  Contain main implementation of SysPerf functionality.
+ * @author kvant6ubl
+ * @date   May 6, 2024
+ *
+ */
+
 #ifndef __SYSPERF_H__
 #define __SYSPERF_H__
 
@@ -67,7 +75,8 @@ typedef enum
 /*******************************************************************************************************************
 *                                            SYSPERF DATA TYPES                                                    *
 *******************************************************************************************************************/
-/* SysPerf types Declarations */
+/* SysPerf types & defines Declarations */
+#define SP_LOCAL                            static
 typedef MAP_RTOS_PTR2TASK                   sp_TaskPtr;
 typedef MAP_RTOS_PRIO                       sp_TaskPrio;
 typedef MAP_RTOS_STACKSIZE                  sp_TaskStackSize;
@@ -98,13 +107,6 @@ typedef struct
     uint32 isrSwitches;
 } sp_IsrRuntime_t;
 
-/* Epoch main runtime statistic */
-typedef struct
-{
-    sp_TaskRuntime_t TasksRuntime[SYSPERF_TASK_NUM];
-    sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
-} sp_EpochStat_t;
-
 /* Uptime statistic */
 typedef struct
 {
@@ -112,17 +114,20 @@ typedef struct
     uint32 TotalIsrRuntime[SYSPERF_ISR_NUM];
 } sp_UptimeStat_t;
 
+/* TODO: History runtime information */
+// TODO
+// TODO
 
 /*******************************************************************************************************************
 *                                            SYSPERF API                                                           *
 *******************************************************************************************************************/
 /* SysPerf Hooks Declarations for RTOS-only usage */
 void SysPerf__PreSchedulerInit(void);
-void SysPerf__PreTaskHook(sp_TaskPtr);
-void SysPerf__PostTaskHook(sp_TaskPtr);
+void SysPerf_PreTaskHook(sp_TaskPtr);
+void SysPerf_PostTaskHook(sp_TaskPtr);
 void SysPerf__PreISRHook();
 void SysPerf__PostISRHook();
 void SysPerf__IdleRaskRunning();
-void SysPerf__EpochOverallStatistic(void);
+void SysPerf_EpochOverallStatistic(void);
 
 #endif /* __SYSPERF_H__ */

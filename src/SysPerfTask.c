@@ -1,14 +1,15 @@
 #include <zephyr.h>
 #include <SysPerf.h>
 
+#include "common/TasksApi.h"
 #include "common/TasksCfg.h"
 
 K_THREAD_STACK_DEFINE(SysPerf_Task_stack_area, SYSPERF_TASK_STACKSIZE);
-static struct k_thread SysPerf_zthread_data;
-static k_tid_t SysPerf_zid;
-static uint8_t SysPerf_taskId = SYSPERF_TASKID;
+TASK_LOCAL struct k_thread SysPerf_zthread_data;
+TASK_LOCAL k_tid_t SysPerf_zid;
+TASK_LOCAL uint8_t SysPerf_taskId = SYSPERF_TASKID;
 
-static void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
     ARG_UNUSED(unused_arg1);
     ARG_UNUSED(unused_arg2);
@@ -18,7 +19,7 @@ static void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_arg3
 
     for (;;)
     {
-        SysPerf__EpochOverallStatistic();
+        SysPerf_EpochOverallStatistic();
         k_msleep(SYSPERF_TASK_PERIOD);
     }
 }

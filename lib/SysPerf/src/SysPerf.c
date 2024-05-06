@@ -1,3 +1,11 @@
+/**
+ * @file   SysPerf.c
+ * @brief  Contain main implementation of SysPerf functionality.
+ * @author kvant6ubl
+ * @date   May 6, 2024
+ *
+ */
+
 /*******************************************************************************************************************
  *                                             RTOS-SPECIFIC HEADERS                                                *
  *******************************************************************************************************************/
@@ -13,31 +21,32 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 /*******************************************************************************************************************
  *                                             SYSPERF LOCAL API                                                    *
  *******************************************************************************************************************/
-static uint32 SysPerf__GetTaskRuntime(uint8 taskId, uint32 timeStamp);
-static uint32 SysPerf__GetUptimeTimestamp(void);
-static uint8 SysPerf__GetTaskId(void);
+SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp);
+SP_LOCAL uint32 SysPerf_GetUptimeTimestamp(void);
+SP_LOCAL uint8 SysPerf_GetTaskId(void);
 
-static sp_EpochStat_t EpochStatistic;
-static sp_UptimeStat_t UptimeStatistic;
+/*******************************************************************************************************************
+ *                                          SYSPERF STAT LOCALS                                                    *
+ *******************************************************************************************************************/
+SP_LOCAL sp_UptimeStat_t UptimeStatistic;
+SP_LOCAL sp_TaskRuntime_t TasksRuntime[SYSPERF_TASK_NUM];
+SP_LOCAL sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
 
 /*******************************************************************************************************************
  *                                       SYSPERF HOOKS IMPLEMENTATION                                               *
  *******************************************************************************************************************/
 
-void SysPerf__PreTaskHook(sp_TaskPtr task)
+void SysPerf_PreTaskHook(sp_TaskPtr task)
 {
    uint32 preTaskTimestamp_uS;
    uint8 taskId;
 
-   taskId = SysPerf__GetTaskId();
-
-   // SP_TRACE_INFO("Task Name: %s\n", task->name);
-   // SP_TRACE_INFO("TaskId: %d\n", taskId);
+   taskId = SysPerf_GetTaskId();
 
    if (taskId < SYSPERF_TASK_NUM)
    {
-      preTaskTimestamp_uS = SysPerf__GetUptimeTimestamp();
-      EpochStatistic.TasksRuntime[taskId].taskTimestamp = preTaskTimestamp_uS;
+      preTaskTimestamp_uS = SysPerf_GetUptimeTimestamp();
+      TasksRuntime[taskId].taskTimestamp = preTaskTimestamp_uS;
    }
    /*
        k_thread_runtime_stats_t rt_stats_thread;
@@ -46,40 +55,63 @@ void SysPerf__PreTaskHook(sp_TaskPtr task)
    */
 }
 
-void SysPerf__PostTaskHook(sp_TaskPtr task)
+void SysPerf_PostTaskHook(sp_TaskPtr task)
 {
    uint32 postTaskTimestamp_uS, taskRuntime_uS;
    uint8 taskId;
 
-   taskId = SysPerf__GetTaskId();
-
-   // SP_TRACE_INFO("Task Name: %s\n", task->name);
-   // SP_TRACE_INFO("TaskId: %d\n", taskId);
+   taskId = SysPerf_GetTaskId();
 
    if (taskId < SYSPERF_TASK_NUM)
    {
-      postTaskTimestamp_uS = SysPerf__GetUptimeTimestamp();
-      taskRuntime_uS = SysPerf__GetTaskRuntime(taskId, postTaskTimestamp_uS);
+      postTaskTimestamp_uS = SysPerf_GetUptimeTimestamp();
+      taskRuntime_uS = SysPerf_GetTaskRuntime(taskId, postTaskTimestamp_uS);
 
-      EpochStatistic.TasksRuntime[taskId].taskTimestamp = postTaskTimestamp_uS;
-      EpochStatistic.TasksRuntime[taskId].totalRuntime += taskRuntime_uS;
-      EpochStatistic.TasksRuntime[taskId].taskSwitches++;
+      if (taskRuntime_uS > TasksRuntime[taskId].maxRuntime)
+      {
+         TasksRuntime[taskId].maxRuntime = taskRuntime_uS;
+      }
 
-      // SP_TRACE_INFO("# ====== Task name: %s, Timestamp = %u [uS], Runtime = %u [uS]\n", task->name, postTaskTimestamp_uS, taskRuntime_uS);
+      TasksRuntime[taskId].taskTimestamp = postTaskTimestamp_uS;
+      TasksRuntime[taskId].totalRuntime += taskRuntime_uS;
+      TasksRuntime[taskId].taskSwitches++;
 
       UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime_uS;
    }
 }
 
-static uint32 SysPerf__GetTaskRuntime(uint8 taskId, uint32 timeStamp)
+/**
+ * @brief Trace Tasks & ISRs runtime statistic per 1 second (epoch). This function need to be called each 1 second.
+ */
+void SysPerf_EpochOverallStatistic(void)
+{
+   // uint32 timeStamp;
+   // timeStamp = SysPerf_GetUptimeTimestamp();
+
+   // update max runtime
+
+   SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
+   SP_TRACE_INFO("#                                                                              #");
+   SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
+
+   for (uint8 taskId = 0; taskId < SYSPERF_TASK_NUM; taskId++)
+   {
+      SP_TRACE_INFO("#     %2u           %10u            %10u          %10u        #",
+                    taskId, UptimeStatistic.TotalTasksRuntime[taskId],
+                    TasksRuntime[taskId].maxRuntime, TasksRuntime[taskId].taskSwitches);
+   }
+   SP_TRACE_INFO("# ############################################################################ #\n");
+}
+
+SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp)
 {
    uint32 taskRuntime, prevTaskTimeStamp;
-   prevTaskTimeStamp = EpochStatistic.TasksRuntime[taskId].taskTimestamp;
+   prevTaskTimeStamp = TasksRuntime[taskId].taskTimestamp;
    taskRuntime = (timeStamp > prevTaskTimeStamp) ? (timeStamp - prevTaskTimeStamp) : (timeStamp + (MAP_RTOS_UPTIME_TOP - prevTaskTimeStamp));
    return taskRuntime;
 }
 
-static uint32 SysPerf__GetUptimeTimestamp(void)
+SP_LOCAL uint32 SysPerf_GetUptimeTimestamp(void)
 {
    uint32 timeStamp;
    timeStamp = k_uptime_ticks();
@@ -87,26 +119,7 @@ static uint32 SysPerf__GetUptimeTimestamp(void)
    return timeStamp; /* in uS*/
 }
 
-static uint8 SysPerf__GetTaskId()
+SP_LOCAL uint8 SysPerf_GetTaskId()
 {
    return (uint8)k_thread_custom_data_get();
-}
-
-/**
- * @brief Trace Tasks & ISRs runtime statistic per 1 second (epoch). This function need to be called each 1 second.
- */
-void SysPerf__EpochOverallStatistic(void)
-{
-   // uint32 timeStamp;
-   // timeStamp = SysPerf__GetUptimeTimestamp();
-
-   SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
-   SP_TRACE_INFO("#                                                                              #");
-   SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
-
-   for (uint8 taskId = 0; taskId < 10; taskId++)
-   {
-      SP_TRACE_INFO("#     %2u           %10u            %10u          %10u        #", 0, 31445, 46345, 4545);
-   }
-   SP_TRACE_INFO("# ############################################################################ #\n");
 }

@@ -3,6 +3,8 @@
 
 #include <zephyr.h>
 
+#define LEDS_LOCAL static
+
 void Led_toggle0(uint32_t delay);
 void Led_init0(void);
 

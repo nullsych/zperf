@@ -1,3 +1,11 @@
+/**
+ * @file   ErrorCodes.h
+ * @brief  Error codes for common project usage.
+ * @author kvant6ubl
+ * @date   May 6, 2024
+ *
+ */
+
 #ifndef __COMMON_ERROR_CODES_H__
 #define __COMMON_ERROR_CODES_H__
 

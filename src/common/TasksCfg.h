@@ -1,3 +1,11 @@
+/**
+ * @file   TasksCfg.h
+ * @brief  Contain runtime configuration (stack size, priority number, specific identifiers) for user-defined tasks.
+ * @author kvant6ubl
+ * @date   May 6, 2024
+ *
+ */
+
 #ifndef __COMMON_TASKS_CFG_H__
 #define __COMMON_TASKS_CFG_H__
 

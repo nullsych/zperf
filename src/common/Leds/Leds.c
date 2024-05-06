@@ -15,10 +15,10 @@ LOG_MODULE_REGISTER(Leds, LOG_LEVEL_DBG);
 #define FLAGS0 DT_GPIO_FLAGS(LED0_NODE, gpios)
 
 /* Runtime device structure (in ROM) per driver instance for LED0 */
-static const struct device *Leds_dev0;
+LEDS_LOCAL const struct device *Leds_dev0;
 
 /* Get runtime device structure, generic for all LEDs */
-static const struct device *Led_getDevTree0(const char *LED, uint8_t PIN, uint32_t FLAGS)
+LEDS_LOCAL const struct device *Led_getDevTree0(const char *LED, uint8_t PIN, uint32_t FLAGS)
 {
    const struct device *dev;
    int retVal;

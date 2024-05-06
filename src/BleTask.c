@@ -1,9 +1,11 @@
-/* main.c - Application main entry point */
-
-/*
- * Copyright (c) 2015-2016 Intel Corporation
+/**
+ * @file   BleTask.c
+ * @brief  Contain main implementation for BleTask.
+ * @author kvant6ubl
+ * @date   May 6, 2024
  *
- * SPDX-License-Identifier: Apache-2.0
+ * The application in the task specifically exposes the BAS (Battery Service) GATT Service.
+ * Once a device connects it will read battery level value and return the percentage of battery level.
  */
 
 #include <zephyr/types.h>
@@ -25,18 +27,18 @@
 LOG_MODULE_REGISTER(BleTask, LOG_LEVEL_DBG);
 
 K_THREAD_STACK_DEFINE(BLE_Task_stack_area, BLE_TASK_STACKSIZE);
-static struct k_thread Ble_zthread_data;
-static k_tid_t Ble_zid;
+TASK_LOCAL struct k_thread Ble_zthread_data;
+TASK_LOCAL k_tid_t Ble_zid;
 
-static uint8_t Ble_taskId = BLE_TASKID;
+TASK_LOCAL uint8_t Ble_taskId = BLE_TASKID;
 
-static const struct bt_data Ble_advertisingData[] = {
+TASK_LOCAL const struct bt_data Ble_advertisingData[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
     BT_DATA_BYTES(BT_DATA_UUID16_ALL,
                   BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
                   BT_UUID_16_ENCODE(BT_UUID_DIS_VAL))};
 
-static void Ble_connected(struct bt_conn *conn, uint8_t errCode)
+TASK_LOCAL void Ble_connected(struct bt_conn *conn, uint8_t errCode)
 {
     if (errCode)
     {
@@ -48,13 +50,13 @@ static void Ble_connected(struct bt_conn *conn, uint8_t errCode)
     }
 }
 
-static void Ble_disconnected(struct bt_conn *conn, uint8_t reason)
+TASK_LOCAL void Ble_disconnected(struct bt_conn *conn, uint8_t reason)
 {
     LOG_INF("Disconnected, reason=0x%02x", reason);
 }
 
 
-static void Ble_authCancel(struct bt_conn *conn)
+TASK_LOCAL void Ble_authCancel(struct bt_conn *conn)
 {
     char bleAddress[BT_ADDR_LE_STR_LEN];
 
@@ -64,7 +66,7 @@ static void Ble_authCancel(struct bt_conn *conn)
 }
 
 
-static void Ble_notifyBatteryLevel(void)
+TASK_LOCAL void Ble_notifyBatteryLevel(void)
 {
     uint8_t batteryLevel = bt_bas_get_battery_level();
 
@@ -83,11 +85,11 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .disconnected = Ble_disconnected,
 };
 
-static struct bt_conn_auth_cb Ble_authenticatedCallback = {
+TASK_LOCAL struct bt_conn_auth_cb Ble_authenticatedCallback = {
     .cancel = Ble_authCancel,
 };
 
-static int Ble_ready(void)
+TASK_LOCAL int Ble_ready(void)
 {
     int errCode;
 
@@ -104,7 +106,7 @@ static int Ble_ready(void)
     return errCode;
 }
 
-static void Ble_main(void)
+TASK_LOCAL void Ble_main(void)
 {
     int errCode;
 
@@ -139,7 +141,7 @@ static void Ble_main(void)
     }
 }
 
-static void Task_BLE(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL void Task_BLE(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
     ARG_UNUSED(unused_arg1);
     ARG_UNUSED(unused_arg2);
