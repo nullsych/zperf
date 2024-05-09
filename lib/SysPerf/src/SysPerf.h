@@ -71,12 +71,17 @@ typedef enum
 /* ***************************************************************************************************************** */
 
 
+/*******************************************************************************************************************
+*                                            SYSPERF KEYWORDS                                                    *
+*******************************************************************************************************************/
+#define SP_LOCAL                            static
+#define SP_LOCAL_INLINE                     static inline
+
 
 /*******************************************************************************************************************
 *                                            SYSPERF DATA TYPES                                                    *
 *******************************************************************************************************************/
 /* SysPerf types & defines Declarations */
-#define SP_LOCAL                            static
 typedef MAP_RTOS_PTR2TASK                   sp_TaskPtr;
 typedef MAP_RTOS_PRIO                       sp_TaskPrio;
 typedef MAP_RTOS_STACKSIZE                  sp_TaskStackSize;
@@ -106,6 +111,14 @@ typedef struct
     uint32 maxRuntime;
     uint32 isrSwitches;
 } sp_IsrRuntime_t;
+
+/* Hook statistic */
+typedef struct
+{
+    uint32 timestamp;
+    uint32 taskRuntime;
+    uint8 taskId;
+} sp_HookStat_t;
 
 /* Uptime statistic */
 typedef struct

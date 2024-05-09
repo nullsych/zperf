@@ -15,6 +15,7 @@
 #include "common/Leds/Leds.h"
 
 K_THREAD_STACK_DEFINE(LED_Task_stack_area, LED_TASK_STACKSIZE);
+
 TASK_LOCAL struct k_thread Led_zthread_data;
 TASK_LOCAL k_tid_t Led_zid;
 TASK_LOCAL uint8_t Led_taskId = LED_TASKID;

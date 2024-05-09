@@ -1,3 +1,12 @@
+/**
+ * @file   SysPerfTask.c
+ * @brief  Contain main implementation for SysPerfTask.
+ * @author kvant6ubl
+ * @date   May 7, 2024
+ * The code inside SysPerfTask consist of the main measuring routine from SysPerf lib.
+ *
+ */
+
 #include <zephyr.h>
 #include <SysPerf.h>
 
@@ -5,6 +14,7 @@
 #include "common/TasksCfg.h"
 
 K_THREAD_STACK_DEFINE(SysPerf_Task_stack_area, SYSPERF_TASK_STACKSIZE);
+
 TASK_LOCAL struct k_thread SysPerf_zthread_data;
 TASK_LOCAL k_tid_t SysPerf_zid;
 TASK_LOCAL uint8_t SysPerf_taskId = SYSPERF_TASKID;

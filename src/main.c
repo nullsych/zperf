@@ -1,7 +1,9 @@
-/*
- * Copyright (c) 2016 Intel Corporation
+/**
+ * @file   main.c
+ * @brief  Contain implementation of main function.
+ * @author kvant6ubl
+ * @date   May 7, 2024
  *
- * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <zephyr.h>

@@ -24,13 +24,13 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp);
 SP_LOCAL uint32 SysPerf_GetUptimeTimestamp(void);
 SP_LOCAL uint8 SysPerf_GetTaskId(void);
-
+SP_LOCAL_INLINE void SysPerf_UpdateTaskStat(uint8 taskId, uint32 timestamp, uint32 taskRuntime);
 /*******************************************************************************************************************
  *                                          SYSPERF STAT LOCALS                                                    *
  *******************************************************************************************************************/
 SP_LOCAL sp_UptimeStat_t UptimeStatistic;
 SP_LOCAL sp_TaskRuntime_t TasksRuntime[SYSPERF_TASK_NUM];
-SP_LOCAL sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
+// SP_LOCAL sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
 
 /*******************************************************************************************************************
  *                                       SYSPERF HOOKS IMPLEMENTATION                                               *
@@ -38,15 +38,15 @@ SP_LOCAL sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
 
 void SysPerf_PreTaskHook(sp_TaskPtr task)
 {
-   uint32 preTaskTimestamp_uS;
+   uint32 timestamp;
    uint8 taskId;
 
    taskId = SysPerf_GetTaskId();
 
    if (taskId < SYSPERF_TASK_NUM)
    {
-      preTaskTimestamp_uS = SysPerf_GetUptimeTimestamp();
-      TasksRuntime[taskId].taskTimestamp = preTaskTimestamp_uS;
+      timestamp = SysPerf_GetUptimeTimestamp();
+      TasksRuntime[taskId].taskTimestamp = timestamp;
    }
    /*
        k_thread_runtime_stats_t rt_stats_thread;
@@ -57,26 +57,28 @@ void SysPerf_PreTaskHook(sp_TaskPtr task)
 
 void SysPerf_PostTaskHook(sp_TaskPtr task)
 {
-   uint32 postTaskTimestamp_uS, taskRuntime_uS;
+   uint32 timestamp, taskRuntime;
    uint8 taskId;
 
    taskId = SysPerf_GetTaskId();
 
    if (taskId < SYSPERF_TASK_NUM)
    {
-      postTaskTimestamp_uS = SysPerf_GetUptimeTimestamp();
-      taskRuntime_uS = SysPerf_GetTaskRuntime(taskId, postTaskTimestamp_uS);
+      timestamp = SysPerf_GetUptimeTimestamp();
+      taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
 
-      if (taskRuntime_uS > TasksRuntime[taskId].maxRuntime)
-      {
-         TasksRuntime[taskId].maxRuntime = taskRuntime_uS;
-      }
+      SysPerf_UpdateTaskStat(taskId, timestamp, taskRuntime);
 
-      TasksRuntime[taskId].taskTimestamp = postTaskTimestamp_uS;
-      TasksRuntime[taskId].totalRuntime += taskRuntime_uS;
-      TasksRuntime[taskId].taskSwitches++;
+      // if (taskRuntime > TasksRuntime[taskId].maxRuntime)
+      // {
+      //    TasksRuntime[taskId].maxRuntime = taskRuntime;
+      // }
 
-      UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime_uS;
+      // TasksRuntime[taskId].taskTimestamp = timestamp;
+      // TasksRuntime[taskId].totalRuntime += taskRuntime;
+      // TasksRuntime[taskId].taskSwitches++;
+
+      UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime;
    }
 }
 
@@ -85,11 +87,6 @@ void SysPerf_PostTaskHook(sp_TaskPtr task)
  */
 void SysPerf_EpochOverallStatistic(void)
 {
-   // uint32 timeStamp;
-   // timeStamp = SysPerf_GetUptimeTimestamp();
-
-   // update max runtime
-
    SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
    SP_TRACE_INFO("#                                                                              #");
    SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
@@ -101,6 +98,22 @@ void SysPerf_EpochOverallStatistic(void)
                     TasksRuntime[taskId].maxRuntime, TasksRuntime[taskId].taskSwitches);
    }
    SP_TRACE_INFO("# ############################################################################ #\n");
+
+   // TODO: reset stat!!!
+}
+
+SP_LOCAL_INLINE void SysPerf_UpdateTaskStat(uint8 taskId, uint32 timestamp, uint32 taskRuntime)
+{
+   sp_TaskRuntime_t *task = &TasksRuntime[taskId];
+
+   if (taskRuntime > task->maxRuntime)
+   {
+      task->maxRuntime = taskRuntime;
+   }
+
+   task->taskTimestamp = timestamp;
+   task->totalRuntime += taskRuntime;
+   task->taskSwitches++;
 }
 
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp)

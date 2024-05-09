@@ -27,6 +27,7 @@
 LOG_MODULE_REGISTER(BleTask, LOG_LEVEL_DBG);
 
 K_THREAD_STACK_DEFINE(BLE_Task_stack_area, BLE_TASK_STACKSIZE);
+
 TASK_LOCAL struct k_thread Ble_zthread_data;
 TASK_LOCAL k_tid_t Ble_zid;
 
