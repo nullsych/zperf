@@ -29,7 +29,7 @@ TASK_LOCAL void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_
 
     for (;;)
     {
-        SysPerf_EpochOverallStatistic();
+        SysPerf_RuntimeOverallStatistic();
         k_msleep(SYSPERF_TASK_PERIOD);
     }
 }

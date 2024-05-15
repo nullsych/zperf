@@ -33,7 +33,11 @@ def serial_ports():
             pass
     return result
 
-WORK_PORT = serial_ports()[0]
+try:
+    WORK_PORT = serial_ports()[0]
+except IndexError:
+    print("\nError: No valid COM port found!\n")
+    sys.exit(0)
 
 serialPort = serial.Serial(port=WORK_PORT, baudrate=115200, timeout=.1)
 

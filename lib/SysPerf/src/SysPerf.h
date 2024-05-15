@@ -20,12 +20,22 @@
 
 
 /*******************************************************************************************************************
+*                                             RTOS-SPECIFIC LOCKS                                                 *
+*******************************************************************************************************************/
+/** @details: Map specific routines to lock/unlock all ISRs **/
+// #define SP_CRITICAL_SECTION_BEGIN(key)           (key = irq_lock())
+// #define SP_CRITICAL_SECTION_END(key)             (irq_unlock(key))
+#define SP_ISR_LOCK                         irq_lock
+#define SP_ISR_UNLOCK                       irq_unlock
+
+
+/*******************************************************************************************************************
 *                                             RTOS-SPECIFIC TRACES                                                 *
 *******************************************************************************************************************/
 /** @details: Map specific functions with printf() format to trace SysPerf* statistics **/
-#define SP_TRACE_INFO LOG_INF
-#define SP_TRACE_WARN LOG_WRN
-#define SP_TRACE_ERRO LOG_ERR
+#define SP_TRACE_INFO                       LOG_INF
+#define SP_TRACE_WARN                       LOG_WRN
+#define SP_TRACE_ERRO                       LOG_ERR
 
 
 /*******************************************************************************************************************
@@ -124,6 +134,8 @@ typedef struct
 typedef struct
 {
     uint32 TotalTasksRuntime[SYSPERF_TASK_NUM];
+    uint32 TotalTasksSwitches[SYSPERF_TASK_NUM];
+    uint32 MaxTasksRuntime[SYSPERF_TASK_NUM];
     uint32 TotalIsrRuntime[SYSPERF_ISR_NUM];
 } sp_UptimeStat_t;
 
@@ -141,6 +153,8 @@ void SysPerf_PostTaskHook(sp_TaskPtr);
 void SysPerf__PreISRHook();
 void SysPerf__PostISRHook();
 void SysPerf__IdleRaskRunning();
-void SysPerf_EpochOverallStatistic(void);
+
+/* SysPerf API for user's code */
+extern void SysPerf_RuntimeOverallStatistic(void);
 
 #endif /* __SYSPERF_H__ */

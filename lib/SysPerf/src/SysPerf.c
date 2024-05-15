@@ -10,6 +10,7 @@
  *                                             RTOS-SPECIFIC HEADERS                                                *
  *******************************************************************************************************************/
 #include <zephyr.h>
+#include <stdlib.h>
 #include <logging/log.h>
 LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 
@@ -24,13 +25,22 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp);
 SP_LOCAL uint32 SysPerf_GetUptimeTimestamp(void);
 SP_LOCAL uint8 SysPerf_GetTaskId(void);
+SP_LOCAL void SysPerf_IsrLock(unsigned int *key);
+SP_LOCAL void SysPerf_IsrUnlock(unsigned int key);
+SP_LOCAL void SysPerf_ResetRuntimeStatistic(void);
+SP_LOCAL void SysPerf_TraceCycleStatistic(void);
+SP_LOCAL void SysPerf_TraceUptimeStatistic(void);
+SP_LOCAL void SysPerf_CycleBackup(void);
 SP_LOCAL_INLINE void SysPerf_UpdateTaskStat(uint8 taskId, uint32 timestamp, uint32 taskRuntime);
+
 /*******************************************************************************************************************
  *                                          SYSPERF STAT LOCALS                                                    *
  *******************************************************************************************************************/
-SP_LOCAL sp_UptimeStat_t UptimeStatistic;
-SP_LOCAL sp_TaskRuntime_t TasksRuntime[SYSPERF_TASK_NUM];
-// SP_LOCAL sp_IsrRuntime_t IsrRuntime[SYSPERF_ISR_NUM];
+SP_LOCAL sp_UptimeStat_t Hook_UptimeStatistic;
+SP_LOCAL sp_TaskRuntime_t Hook_TasksStatistics[SYSPERF_TASK_NUM];
+
+SP_LOCAL sp_UptimeStat_t TraceCycle_UptimeStatistic;
+SP_LOCAL sp_TaskRuntime_t TraceCycle_TasksStatistics[SYSPERF_TASK_NUM];
 
 /*******************************************************************************************************************
  *                                       SYSPERF HOOKS IMPLEMENTATION                                               *
@@ -46,7 +56,7 @@ void SysPerf_PreTaskHook(sp_TaskPtr task)
    if (taskId < SYSPERF_TASK_NUM)
    {
       timestamp = SysPerf_GetUptimeTimestamp();
-      TasksRuntime[taskId].taskTimestamp = timestamp;
+      Hook_TasksStatistics[taskId].taskTimestamp = timestamp;
    }
    /*
        k_thread_runtime_stats_t rt_stats_thread;
@@ -68,43 +78,29 @@ void SysPerf_PostTaskHook(sp_TaskPtr task)
       taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
 
       SysPerf_UpdateTaskStat(taskId, timestamp, taskRuntime);
-
-      // if (taskRuntime > TasksRuntime[taskId].maxRuntime)
-      // {
-      //    TasksRuntime[taskId].maxRuntime = taskRuntime;
-      // }
-
-      // TasksRuntime[taskId].taskTimestamp = timestamp;
-      // TasksRuntime[taskId].totalRuntime += taskRuntime;
-      // TasksRuntime[taskId].taskSwitches++;
-
-      UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime;
    }
 }
 
+/*******************************************************************************************************************
+ *                                       SYSPERF API IMPLEMENTATION                                                *
+ *******************************************************************************************************************/
+
 /**
- * @brief Trace Tasks & ISRs runtime statistic per 1 second (epoch). This function need to be called each 1 second.
+ * @brief Trace Tasks & ISRs runtime statistic per 1 second (cycle). This function need to be called each 1 second.
  */
-void SysPerf_EpochOverallStatistic(void)
+void SysPerf_RuntimeOverallStatistic(void)
 {
-   SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
-   SP_TRACE_INFO("#                                                                              #");
-   SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
+   SysPerf_CycleBackup();
 
-   for (uint8 taskId = 0; taskId < SYSPERF_TASK_NUM; taskId++)
-   {
-      SP_TRACE_INFO("#     %2u           %10u            %10u          %10u        #",
-                    taskId, UptimeStatistic.TotalTasksRuntime[taskId],
-                    TasksRuntime[taskId].maxRuntime, TasksRuntime[taskId].taskSwitches);
-   }
-   SP_TRACE_INFO("# ############################################################################ #\n");
+   SysPerf_TraceCycleStatistic();
+   SysPerf_TraceUptimeStatistic();
 
-   // TODO: reset stat!!!
+   SysPerf_ResetRuntimeStatistic();
 }
 
 SP_LOCAL_INLINE void SysPerf_UpdateTaskStat(uint8 taskId, uint32 timestamp, uint32 taskRuntime)
 {
-   sp_TaskRuntime_t *task = &TasksRuntime[taskId];
+   sp_TaskRuntime_t *task = &Hook_TasksStatistics[taskId];
 
    if (taskRuntime > task->maxRuntime)
    {
@@ -114,12 +110,71 @@ SP_LOCAL_INLINE void SysPerf_UpdateTaskStat(uint8 taskId, uint32 timestamp, uint
    task->taskTimestamp = timestamp;
    task->totalRuntime += taskRuntime;
    task->taskSwitches++;
+
+   // TODO: func
+   Hook_UptimeStatistic.TotalTasksRuntime[taskId] += taskRuntime;
+   Hook_UptimeStatistic.MaxTasksRuntime[taskId] = task->maxRuntime;
+   Hook_UptimeStatistic.TotalTasksSwitches[taskId] += task->taskSwitches;
+}
+
+SP_LOCAL void SysPerf_IsrLock(unsigned int *key)
+{
+   *key = SP_ISR_LOCK();
+}
+
+SP_LOCAL void SysPerf_IsrUnlock(unsigned int key)
+{
+   SP_ISR_UNLOCK(key);
+}
+
+SP_LOCAL void SysPerf_TraceUptimeStatistic(void)
+{
+   // TODO: same for SysPerf_TraceCycleStatistic
+}
+
+SP_LOCAL void SysPerf_CycleBackup(void)
+{
+   unsigned int key;
+   SysPerf_IsrLock(&key);
+   memcpy(&TraceCycle_TasksStatistics, &Hook_TasksStatistics, sizeof(Hook_TasksStatistics));
+   memcpy(&TraceCycle_UptimeStatistic, &Hook_UptimeStatistic, sizeof(Hook_UptimeStatistic));
+   SysPerf_IsrUnlock(key);
+}
+
+SP_LOCAL void SysPerf_TraceCycleStatistic(void)
+{
+   SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
+   SP_TRACE_INFO("#                                                                              #");
+   SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
+
+   for (uint8 taskId = 0; taskId < SYSPERF_TASK_NUM; taskId++)
+   {
+      SP_TRACE_INFO("#     %2u             %10u          %10u        %10u          #",
+                    taskId, TraceCycle_TasksStatistics[taskId].totalRuntime,
+                    TraceCycle_TasksStatistics[taskId].maxRuntime, TraceCycle_TasksStatistics[taskId].taskSwitches);
+   }
+   SP_TRACE_INFO("# ############################################################################ #\n");
+}
+
+SP_LOCAL void SysPerf_ResetRuntimeStatistic(void)
+{
+   for (uint8 taskId = 0; taskId < SYSPERF_TASK_NUM; taskId++)
+   {
+      TraceCycle_TasksStatistics[taskId].maxRuntime = 0u;
+      TraceCycle_TasksStatistics[taskId].maxRuntime = 0u;
+      TraceCycle_TasksStatistics[taskId].taskSwitches = 0u;
+      TraceCycle_TasksStatistics[taskId].totalRuntime = 0u;
+      Hook_TasksStatistics[taskId].maxRuntime = 0u;
+      Hook_TasksStatistics[taskId].maxRuntime = 0u;
+      Hook_TasksStatistics[taskId].taskSwitches = 0u;
+      Hook_TasksStatistics[taskId].totalRuntime = 0u;
+   }
 }
 
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskId, uint32 timeStamp)
 {
    uint32 taskRuntime, prevTaskTimeStamp;
-   prevTaskTimeStamp = TasksRuntime[taskId].taskTimestamp;
+   prevTaskTimeStamp = Hook_TasksStatistics[taskId].taskTimestamp;
    taskRuntime = (timeStamp > prevTaskTimeStamp) ? (timeStamp - prevTaskTimeStamp) : (timeStamp + (MAP_RTOS_UPTIME_TOP - prevTaskTimeStamp));
    return taskRuntime;
 }
