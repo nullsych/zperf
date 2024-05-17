@@ -9,61 +9,22 @@
 #ifndef __SYSPERF_H__
 #define __SYSPERF_H__
 
-/*******************************************************************************************************************
-*                                             RTOS-SPECIFIC HEADERS                                                *
-*******************************************************************************************************************/
-/** @details: Include necessary headers **/
-#include <zephyr.h>
-// #define LOG_LEVEL LOG_LEVEL_DBG
-// #define LOG_MODULE_NAME SysPerf
-#include <logging/log.h>
-
+#include "SysPerf_RTOS_Map.h"
 
 /*******************************************************************************************************************
-*                                             RTOS-SPECIFIC LOCKS                                                 *
+*                                            SYSPERF KEYWORDS                                                      *
 *******************************************************************************************************************/
-/** @details: Map specific routines to lock/unlock all ISRs **/
-// #define SP_CRITICAL_SECTION_BEGIN(key)           (key = irq_lock())
-// #define SP_CRITICAL_SECTION_END(key)             (irq_unlock(key))
-#define SP_ISR_LOCK                         irq_lock
-#define SP_ISR_UNLOCK                       irq_unlock
+#define SP_LOCAL                            static
+#define SP_LOCAL_INLINE                     static inline
 
 
 /*******************************************************************************************************************
-*                                             RTOS-SPECIFIC TRACES                                                 *
+*                                            SYSPERF DATA TYPES                                                    *
 *******************************************************************************************************************/
-/** @details: Map specific functions with printf() format to trace SysPerf* statistics **/
-#define SP_TRACE_INFO                       LOG_INF
-#define SP_TRACE_WARN                       LOG_WRN
-#define SP_TRACE_ERRO                       LOG_ERR
 
-
-/*******************************************************************************************************************
-*                                           RTOS-SPECIFIC CONTANTS                                                 *
-*******************************************************************************************************************/
-/** @details: Map RTOS-specific constants **/
-#define MAP_RTOS_TASKS_COUNT                (2u)                        /* Number of tasks, runnings in system */
-#define MAP_RTOS_ISRS_COUNT                 (0u)                        /* Number of ISRs, runnings in system */
-#define MAP_RTOS_UPTIME_TOP                 (0xFFFFFFul)                /* Zephyr timer top value */
-#define MAP_RTOS_TASK_MAX_NAME_LEN          CONFIG_THREAD_MAX_NAME_LEN  /* Zephyr tasks max len of name */
-
-
-/*******************************************************************************************************************
-*                                             RTOS-SPECIFIC TYPES                                                  *
-*******************************************************************************************************************/
-/** @details: Map RTOS-speficif standart, Tasks & ISRs types **/
-#define MAP_RTOS_PTR2TASK                   struct k_thread *
-#define MAP_RTOS_PTR2ISR
-#define MAP_RTOS_PRIO                       int
-#define MAP_RTOS_STACKSIZE                  int
-typedef uint64_t                            uint64;
-typedef uint32_t                            uint32;
-typedef uint16_t                            uint16;
-typedef uint8_t                             uint8;
-typedef int64_t                             sint64;
-typedef int32_t                             sint32;
-typedef int16_t                             sint16;
-typedef int8_t                              sint8;
+typedef MAP_RTOS_PTR2TASK                   sp_TaskPtr;
+typedef MAP_RTOS_PRIO                       sp_TaskPrio;
+typedef MAP_RTOS_STACKSIZE                  sp_TaskStackSize;
 
 /* Tasks Identifiers */
 typedef enum
@@ -78,24 +39,6 @@ typedef enum
 {
     SYSPERF_ISR_NUM = MAP_RTOS_ISRS_COUNT
 } sp_IsrId;
-/* ***************************************************************************************************************** */
-
-
-/*******************************************************************************************************************
-*                                            SYSPERF KEYWORDS                                                    *
-*******************************************************************************************************************/
-#define SP_LOCAL                            static
-#define SP_LOCAL_INLINE                     static inline
-
-
-/*******************************************************************************************************************
-*                                            SYSPERF DATA TYPES                                                    *
-*******************************************************************************************************************/
-/* SysPerf types & defines Declarations */
-typedef MAP_RTOS_PTR2TASK                   sp_TaskPtr;
-typedef MAP_RTOS_PRIO                       sp_TaskPrio;
-typedef MAP_RTOS_STACKSIZE                  sp_TaskStackSize;
-typedef uint32_t                            sp_TaskRuntime;
 
 /* Configuration information of a task */
 typedef struct
@@ -140,8 +83,7 @@ typedef struct
 } sp_UptimeStat_t;
 
 /* TODO: History runtime information */
-// TODO
-// TODO
+
 
 /*******************************************************************************************************************
 *                                            SYSPERF API                                                           *

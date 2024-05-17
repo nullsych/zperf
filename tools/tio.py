@@ -46,13 +46,13 @@ serialString = ""
 while(1):
 
     try:
-        # Wait until there is data waiting in the serial buffer
         if(serialPort.in_waiting > 0):
-            # Read data out of the buffer until a carraige return / new line is found
             serialString = serialPort.readline()
-            # Print the contents of the serial data
             print(serialString.decode('Ascii'), end='')
 
     except KeyboardInterrupt:
         print("\nCtrl-C, exiting..")
         sys.exit()
+
+    except UnicodeDecodeError:
+        print("\nCodec can't decode byte in position, try one more time...")
