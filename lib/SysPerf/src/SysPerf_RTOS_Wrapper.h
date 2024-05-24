@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef __SYSPERF_RTOS_WRAPPER_H__
-#define __SYSPERF_RTOS_WRAPPER_H__
+#ifndef SYSPERF_RTOS_WRAPPER_H
+#define SYSPERF_RTOS_WRAPPER_H
 
 /* Place RTOS-speficif headers */
 #include <zephyr.h>
@@ -34,4 +34,4 @@ void sys_trace_thread_switched_out_user(struct k_thread *thread)
     SysPerf_PostTaskHook((sp_TaskPtr)thread);
 }
 
-#endif /* __SYSPERF_RTOS_WRAPPER_H__ */
+#endif /* SYSPERF_RTOS_WRAPPER_H */

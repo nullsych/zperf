@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __COMMON_TASKS_API_H__
-#define __COMMON_TASKS_API_H__
+#ifndef SRC_COMMON_TASKS_API_H
+#define SRC_COMMON_TASKS_API_H
 
 #include <zephyr.h>
 #include <zephyr/types.h>
@@ -42,4 +42,4 @@ static const char *now_str(void)
 }
 */
 
-#endif /* __COMMON_TASKS_API_H__ */
+#endif /* SRC_COMMON_TASKS_API_H */

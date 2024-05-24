@@ -27,7 +27,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 void main(void)
 {
-   Led_init0();
+   Leds_init();
 
    Led_createTask();
 

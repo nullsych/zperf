@@ -7,61 +7,89 @@
 LOG_MODULE_REGISTER(Leds, LOG_LEVEL_DBG);
 
 #include "common/Leds/Leds.h"
+#include "common/Leds/LedPins.h"
 
-/* The devicetree node identifier for the "led0" alias. */
-#define LED0_NODE DT_ALIAS(led0)
-#define LED0 DT_GPIO_LABEL(LED0_NODE, gpios)
-#define PIN0 DT_GPIO_PIN(LED0_NODE, gpios)
-#define FLAGS0 DT_GPIO_FLAGS(LED0_NODE, gpios)
+LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *, uint8_t, uint32_t);
+LEDS_LOCAL void Leds_getDevTree(Leds_config *);
+LEDS_LOCAL void Leds_initStates(void);
 
-/* Runtime device structure (in ROM) per driver instance for LED0 */
-LEDS_LOCAL const struct device *Leds_dev0;
+LEDS_LOCAL Leds_config OnboardLeds[LEDS_NUMBER];
 
-/* Get runtime device structure, generic for all LEDs */
-LEDS_LOCAL const struct device *Led_getDevTree0(const char *LED, uint8_t PIN, uint32_t FLAGS)
+LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *ledLabel, uint8_t pin, uint32_t flags)
 {
-   const struct device *dev;
-   int retVal;
+   OnboardLeds->label = ledLabel;
+   OnboardLeds->flags = flags;
+   OnboardLeds->pin = pin;
 
-   dev = device_get_binding(LED);
-   if (dev == NULL)
+   Leds_getDevTree(OnboardLeds);
+
+   if (NULL == OnboardLeds->tree)
    {
-      printk("Device structure for a driver by name failed! dev == NULL");
-      return dev;
+      LOG_ERR("Device tree initialization failed");
    }
-
-   retVal = gpio_pin_configure(dev, PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
-   if (retVal < 0)
+   else
    {
-      printk("Pin is not configured! ret == %d", retVal);
-      return NULL;
+      LOG_INF("Led initialization done successfully!");
    }
-
-   return dev;
 }
 
-void Led_toggle0(uint32_t delay)
+/* Get runtime device structure for specific LED */
+LEDS_LOCAL void Leds_getDevTree(Leds_config *OnboardLeds)
 {
-   bool led_is_on;
-   led_is_on = true;
+   const struct device *dev;
+   int pinConfigured;
+
+   dev = device_get_binding(OnboardLeds->label);
+   if (NULL == dev)
+   {
+      LOG_ERR("Device structure for a driver by name failed!");
+      dev = NULL;
+   }
+   else
+   {
+      pinConfigured = gpio_pin_configure(dev, OnboardLeds->pin, GPIO_OUTPUT_ACTIVE | OnboardLeds->flags);
+      if (0 != pinConfigured)
+      {
+         LOG_ERR("Pin is not configured! ret: %d", pinConfigured);
+         dev = NULL;
+      }
+   }
+
+   OnboardLeds->tree = dev;
+}
+
+LEDS_LOCAL void Leds_initStates(void)
+{
+   Leds_idx ledIndex;
+
+   for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
+   {
+      OnboardLeds[ledIndex].state = LED_OFF;
+   }
+}
+
+void Leds_toggleLeds(uint32_t delay)
+{
+   Leds_idx ledIndex;
+   Leds_initStates();
 
    for (;;)
    {
-      gpio_pin_set(Leds_dev0, PIN0, (int)led_is_on);
-      led_is_on = !led_is_on;
-
-      k_msleep(delay);
+      for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
+      {
+         gpio_pin_set(OnboardLeds[ledIndex].tree, OnboardLeds[ledIndex].pin, (int)OnboardLeds[ledIndex].state);
+         OnboardLeds[ledIndex].state = !(OnboardLeds[ledIndex].state);
+         k_msleep(delay);
+      }
    }
 }
 
-void Led_init0(void)
+void Leds_init(void)
 {
-   Leds_dev0 = Led_getDevTree0(LED0, PIN0, FLAGS0);
-   if (Leds_dev0 == NULL)
-   {
-      printk("Device LED0 initialization failed");
-      return;
-   }
+   Leds_setLedConfig(&OnboardLeds[LED_IDX_0], LED_PIN_0_LABEL, LED_PIN0, LED_PIN_0_FLAGS);
+   Leds_setLedConfig(&OnboardLeds[LED_IDX_1], LED_PIN_1_LABEL, LED_PIN1, LED_PIN_1_FLAGS);
+   Leds_setLedConfig(&OnboardLeds[LED_IDX_2], LED_PIN_2_LABEL, LED_PIN2, LED_PIN_2_FLAGS);
+   Leds_setLedConfig(&OnboardLeds[LED_IDX_3], LED_PIN_3_LABEL, LED_PIN3, LED_PIN_3_FLAGS);
 }
 
 /* EOF */

@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __SYSPERF_H__
-#define __SYSPERF_H__
+#ifndef SYSPERF_H
+#define SYSPERF_H
 
 #include "SysPerf_RTOS_Map.h"
 
@@ -30,7 +30,8 @@ typedef MAP_RTOS_STACKSIZE                  sp_TaskStackSize;
 typedef enum
 {
     TaskLED0 = 0,
-    TaskIdle = 1,
+    TaskBLE = 1,
+    TaskSysPerf = 3,
     SYSPERF_TASK_NUM = MAP_RTOS_TASKS_COUNT
 } sp_TaskId;
 
@@ -99,4 +100,4 @@ void SysPerf__IdleRaskRunning();
 /* SysPerf API for user's code */
 extern void SysPerf_RuntimeOverallStatistic(void);
 
-#endif /* __SYSPERF_H__ */
+#endif /* SYSPERF_H */

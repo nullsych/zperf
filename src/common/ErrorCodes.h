@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __COMMON_ERROR_CODES_H__
-#define __COMMON_ERROR_CODES_H__
+#ifndef SRC_COMMON_ERROR_CODES_H
+#define SRC_COMMON_ERROR_CODES_H
 
 #define NRF_OK      0u
 #define NRF_ERROR   0u
@@ -26,4 +26,4 @@ typedef enum
     NRF_LED_NOK = 1
 } Led_Error_t;
 
-#endif /* __COMMON_ERROR_CODES_H__ */
+#endif /* SRC_COMMON_ERROR_CODES_H */
