@@ -66,16 +66,6 @@ void sys_trace_thread_priority_set_user(struct k_thread *thread, int prio)
    /* code */
 }
 
-void sys_trace_isr_enter_user()
-{
-   /* code */
-}
-
-void sys_trace_isr_exit_user(void)
-{
-   /* code */
-}
-
 void sys_trace_idle_user(void)
 {
    /* code */
