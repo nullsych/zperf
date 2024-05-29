@@ -15,7 +15,7 @@
 #include <drivers/gpio.h>
 
 /* Number of connected leds */
-#define LEDS_NUMBER             (4U)
+#define LEDS_NUMBER             (1U)
 
 #define LED_ON                  (true)
 #define LED_OFF                 (false)

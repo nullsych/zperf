@@ -44,4 +44,9 @@ void sys_trace_isr_exit_user(void)
    /* code */
 }
 
+void sys_trace_idle_user(void)
+{
+   SysPerf_IdleTaskRunning();
+}
+
 #endif /* SYSPERF_RTOS_WRAPPER_H */

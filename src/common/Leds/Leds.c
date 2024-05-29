@@ -87,9 +87,9 @@ void Leds_toggleLeds(uint32_t delay)
 void Leds_init(void)
 {
    Leds_setLedConfig(&OnboardLeds[LED_IDX_0], LED_PIN_0_LABEL, LED_PIN0, LED_PIN_0_FLAGS);
-   Leds_setLedConfig(&OnboardLeds[LED_IDX_1], LED_PIN_1_LABEL, LED_PIN1, LED_PIN_1_FLAGS);
-   Leds_setLedConfig(&OnboardLeds[LED_IDX_2], LED_PIN_2_LABEL, LED_PIN2, LED_PIN_2_FLAGS);
-   Leds_setLedConfig(&OnboardLeds[LED_IDX_3], LED_PIN_3_LABEL, LED_PIN3, LED_PIN_3_FLAGS);
+   // Leds_setLedConfig(&OnboardLeds[LED_IDX_1], LED_PIN_1_LABEL, LED_PIN1, LED_PIN_1_FLAGS);
+   // Leds_setLedConfig(&OnboardLeds[LED_IDX_2], LED_PIN_2_LABEL, LED_PIN2, LED_PIN_2_FLAGS);
+   // Leds_setLedConfig(&OnboardLeds[LED_IDX_3], LED_PIN_3_LABEL, LED_PIN3, LED_PIN_3_FLAGS);
 }
 
 /* EOF */
