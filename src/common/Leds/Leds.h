@@ -22,6 +22,8 @@ typedef struct
     const struct device *tree;
     uint32_t flags;
 } Leds_config;
+// TODO: use gpio_dt_spec !!!
+// Container for GPIO pin information specified in devicetree!!
 
 typedef enum
 {

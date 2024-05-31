@@ -13,6 +13,8 @@ LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *, uint8_
 LEDS_LOCAL void Leds_getDevTree(Leds_config *);
 LEDS_LOCAL void Leds_initStates(void);
 
+// TODO: use gpio_dt_spec !!!
+// Container for GPIO pin information specified in devicetree!!
 LEDS_LOCAL Leds_config OnboardLeds[LEDS_NUMBER];
 
 LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *ledLabel, uint8_t pin, uint32_t flags)
