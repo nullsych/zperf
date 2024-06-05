@@ -28,7 +28,12 @@ TASK_LOCAL void Task_LED(void *unused_arg1, void *unused_arg2, void *unused_arg3
 
    k_thread_custom_data_set((void *)Led_taskId);
 
-   Leds_toggleLeds(LED_TASK_PERIOD);
+   Leds_init();
+
+   for (;;)
+   {
+      Leds_toggleLeds(LED_TASK_PERIOD);
+   }
 }
 
 void Led_createTask(void)

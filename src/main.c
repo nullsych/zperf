@@ -27,12 +27,8 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 void main(void)
 {
-   Leds_init();
-
    Led_createTask();
-
    Ble_createTask();
-
    SysPerf_createTask();
 }
 

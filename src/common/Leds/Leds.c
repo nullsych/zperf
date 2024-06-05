@@ -60,7 +60,7 @@ LEDS_LOCAL void Leds_getDevTree(Leds_config *OnboardLeds)
    OnboardLeds->tree = dev;
 }
 
-LEDS_LOCAL void Leds_initStates(void)
+void Leds_initStates(void)
 {
    Leds_idx ledIndex;
 
@@ -73,16 +73,12 @@ LEDS_LOCAL void Leds_initStates(void)
 void Leds_toggleLeds(uint32_t delay)
 {
    Leds_idx ledIndex;
-   Leds_initStates();
 
-   for (;;)
+   for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
    {
-      for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
-      {
-         gpio_pin_set(OnboardLeds[ledIndex].tree, OnboardLeds[ledIndex].pin, (int)OnboardLeds[ledIndex].state);
-         OnboardLeds[ledIndex].state = !(OnboardLeds[ledIndex].state);
-         k_msleep(delay);
-      }
+      gpio_pin_set(OnboardLeds[ledIndex].tree, OnboardLeds[ledIndex].pin, (int)OnboardLeds[ledIndex].state);
+      OnboardLeds[ledIndex].state = !(OnboardLeds[ledIndex].state);
+      k_msleep(delay);
    }
 }
 
@@ -92,6 +88,7 @@ void Leds_init(void)
    // Leds_setLedConfig(&OnboardLeds[LED_IDX_1], LED_PIN_1_LABEL, LED_PIN1, LED_PIN_1_FLAGS);
    // Leds_setLedConfig(&OnboardLeds[LED_IDX_2], LED_PIN_2_LABEL, LED_PIN2, LED_PIN_2_FLAGS);
    // Leds_setLedConfig(&OnboardLeds[LED_IDX_3], LED_PIN_3_LABEL, LED_PIN3, LED_PIN_3_FLAGS);
+   Leds_initStates();
 }
 
 /* EOF */
