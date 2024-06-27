@@ -13,9 +13,8 @@
 *                                             RTOS-SPECIFIC HEADERS                                                *
 *******************************************************************************************************************/
 /** @details: Include necessary headers **/
-#include <zephyr.h>
-#include <logging/log.h>
-
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC LOCKS                                                 *

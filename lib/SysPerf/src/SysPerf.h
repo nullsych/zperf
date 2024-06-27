@@ -141,8 +141,8 @@ typedef struct
 *                                            SYSPERF GLOBAL API                                                    *
 *******************************************************************************************************************/
 /* SysPerf Hooks Declarations for RTOS-only usage */
-SP_RTOS_CALLED void SysPerf_PreTaskHook(sp_TaskPtr);
-SP_RTOS_CALLED void SysPerf_PostTaskHook(sp_TaskPtr);
+SP_RTOS_CALLED void SysPerf_PreTaskHook(void);
+SP_RTOS_CALLED void SysPerf_PostTaskHook(void);
 SP_RTOS_CALLED void SysPerf_PreISRHook(void);
 SP_RTOS_CALLED void SysPerf_PostISRHook(void);
 SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void);

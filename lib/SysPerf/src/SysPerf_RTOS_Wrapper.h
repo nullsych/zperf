@@ -17,21 +17,21 @@
 #define SYSPERF_RTOS_WRAPPER_H
 
 /* Place RTOS-specific headers */
-#include <zephyr.h>
-#include <debug/thread_analyzer.h>
-#include <tracing/tracing.h>
+#include <zephyr/kernel.h>
+#include <zephyr/debug/thread_analyzer.h>
+#include <zephyr/tracing/tracing.h>
 #include <stdint-gcc.h>
 
 #include "SysPerf.h"
 
-void sys_trace_thread_switched_in_user(struct k_thread *thread)
+void sys_trace_thread_switched_in_user(void)
 {
-    SysPerf_PreTaskHook((sp_TaskPtr)thread);
+   SysPerf_PreTaskHook();
 }
 
-void sys_trace_thread_switched_out_user(struct k_thread *thread)
+void sys_trace_thread_switched_out_user(void)
 {
-    SysPerf_PostTaskHook((sp_TaskPtr)thread);
+   SysPerf_PostTaskHook();
 }
 
 void sys_trace_isr_enter_user(void)

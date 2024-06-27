@@ -9,9 +9,9 @@
 /*******************************************************************************************************************
  *                                             RTOS-SPECIFIC HEADERS                                                *
  *******************************************************************************************************************/
-#include <zephyr.h>
 #include <stdlib.h>
-#include <logging/log.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
@@ -58,7 +58,7 @@ SP_LOCAL_INLINE uint32 SysPerf_HistoryGetLastTimestamp(void);
  *                                       SYSPERF HOOKS IMPLEMENTATION                                              *
  *******************************************************************************************************************/
 
-SP_RTOS_CALLED void SysPerf_PreTaskHook(sp_TaskPtr task)
+SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
 {
    uint8 taskId;
 
@@ -73,7 +73,7 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(sp_TaskPtr task)
    }
 }
 
-SP_RTOS_CALLED void SysPerf_PostTaskHook(sp_TaskPtr task)
+SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
 {
    uint32 timestamp;
    uint32 taskRuntime;

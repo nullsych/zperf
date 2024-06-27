@@ -5,12 +5,14 @@ project(NrfSysPerf)
 
 FILE(GLOB main_sources ./src/*.c)
 FILE(GLOB common_sources_leds ./src/common/Leds/*.c)
+FILE(GLOB sysperf_sources ./lib/SysPerf/src/*.c)
 
 # Include project's header files
 include_directories(
     ./src/
     ./src/common/
     ./src/common/Leds/
+    ./lib/SysPerf/src
 )
 
 target_sources(
@@ -18,4 +20,5 @@ target_sources(
     PRIVATE
     ${main_sources}
     ${common_sources_leds}
+    ${sysperf_sources}
 )
