@@ -1,94 +1,46 @@
-#include <zephyr.h>
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(Leds, LOG_LEVEL_DBG);
 
 #include "common/Leds/Leds.h"
 #include "common/Leds/LedPins.h"
 
-LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *, uint8_t, uint32_t);
-LEDS_LOCAL void Leds_getDevTree(Leds_config *);
-LEDS_LOCAL void Leds_initStates(void);
-
-// TODO: use gpio_dt_spec !!!
-// Container for GPIO pin information specified in devicetree!!
-LEDS_LOCAL Leds_config OnboardLeds[LEDS_NUMBER];
-
-LEDS_LOCAL void Leds_setLedConfig(Leds_config *OnboardLeds, const char *ledLabel, uint8_t pin, uint32_t flags)
-{
-   OnboardLeds->label = ledLabel;
-   OnboardLeds->flags = flags;
-   OnboardLeds->pin = pin;
-
-   Leds_getDevTree(OnboardLeds);
-
-   if (NULL == OnboardLeds->tree)
-   {
-      LOG_ERR("Device tree initialization failed");
-   }
-   else
-   {
-      LOG_INF("Led initialization done successfully!");
-   }
-}
-
-/* Get runtime device structure for specific LED */
-LEDS_LOCAL void Leds_getDevTree(Leds_config *OnboardLeds)
-{
-   const struct device *dev;
-   int pinConfigured;
-
-   dev = device_get_binding(OnboardLeds->label);
-   if (NULL == dev)
-   {
-      LOG_ERR("Device structure for a driver by name failed!");
-      dev = NULL;
-   }
-   else
-   {
-      pinConfigured = gpio_pin_configure(dev, OnboardLeds->pin, GPIO_OUTPUT_ACTIVE | OnboardLeds->flags);
-      if (0 != pinConfigured)
-      {
-         LOG_ERR("Pin is not configured! ret: %d", pinConfigured);
-         dev = NULL;
-      }
-   }
-
-   OnboardLeds->tree = dev;
-}
-
-void Leds_initStates(void)
-{
-   Leds_idx ledIndex;
-
-   for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
-   {
-      OnboardLeds[ledIndex].state = LED_OFF;
-   }
-}
+static const Led_Cfg led = GPIO_DT_SPEC_GET(LED_PIN_0_NODE, gpios);
 
 void Leds_toggleLeds(uint32_t delay)
 {
-   Leds_idx ledIndex;
+   int ret;
 
-   for (ledIndex = (Leds_idx)0; ledIndex < LED_IDX_NUMBER; ledIndex++)
+   while (1)
    {
-      gpio_pin_set(OnboardLeds[ledIndex].tree, OnboardLeds[ledIndex].pin, (int)OnboardLeds[ledIndex].state);
-      OnboardLeds[ledIndex].state = !(OnboardLeds[ledIndex].state);
+      ret = gpio_pin_toggle_dt(&led);
+	   if (ret < 0)
+      {
+         LOG_ERR("Error while toggle pin level!");
+	   }
       k_msleep(delay);
    }
 }
 
 void Leds_init(void)
 {
-   Leds_setLedConfig(&OnboardLeds[LED_IDX_0], LED_PIN_0_LABEL, LED_PIN0, LED_PIN_0_FLAGS);
-   // Leds_setLedConfig(&OnboardLeds[LED_IDX_1], LED_PIN_1_LABEL, LED_PIN1, LED_PIN_1_FLAGS);
-   // Leds_setLedConfig(&OnboardLeds[LED_IDX_2], LED_PIN_2_LABEL, LED_PIN2, LED_PIN_2_FLAGS);
-   // Leds_setLedConfig(&OnboardLeds[LED_IDX_3], LED_PIN_3_LABEL, LED_PIN3, LED_PIN_3_FLAGS);
-   Leds_initStates();
+	if (!gpio_is_ready_dt(&led))
+   {
+      LOG_ERR("GPIO is not ready for configuration!");
+	}
+   else
+   {
+      int ret;
+      ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	   if (ret < 0)
+      {
+         LOG_ERR("GPIO is not configured!");
+	   }
+   }
 }
 
 /* EOF */

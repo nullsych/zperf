@@ -9,21 +9,15 @@
 #ifndef SRC_COMMON_LEDS_LEDS_H
 #define SRC_COMMON_LEDS_LEDS_H
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include "common/Leds/LedPins.h"
 
 #define LEDS_LOCAL static
 
-typedef struct
-{
-    bool state;
-    uint8_t pin;
-    const char *label;
-    const struct device *tree;
-    uint32_t flags;
-} Leds_config;
-// TODO: use gpio_dt_spec !!!
-// Container for GPIO pin information specified in devicetree!!
+#define LEDS_DELAY 450
+
+/* Maped Container for GPIO pin information specified in devicetree */
+typedef struct gpio_dt_spec Led_Cfg;
 
 typedef enum
 {

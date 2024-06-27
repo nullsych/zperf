@@ -6,30 +6,29 @@
  *
  */
 
-#include <zephyr.h>
+#include <stdio.h>
+#include <zephyr/kernel.h>
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/uuid.h>
-
-/* Application related headers */
+/* Application headers */
 #include "common/Leds/Leds.h"
 #include "common/TasksCfg.h"
 #include "common/TasksApi.h"
 
 /* SysPerf's hooks, used under Zephyr's hooks */
-#include <SysPerf_RTOS_Wrapper.h>
+// #include <SysPerf_RTOS_Wrapper.h>
 
 /* Rest of Zephyr's unsused hooks */
 #include "RTOSHooks.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
-void main(void)
+int main(void)
 {
-   Led_createTask();
-   Ble_createTask();
-   SysPerf_createTask();
+	LOG_INF("Application tasks creating...");
+	Led_createTask();
+	Ble_createTask();
+	SysPerf_createTask();
 }
 
 /* EOF */

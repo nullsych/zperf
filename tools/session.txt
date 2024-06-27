@@ -1,0 +1,24 @@
+Open COM4 sucessfully! Data:
+
+*** Booting nRF Connect SDK 3758bcbfa5cd ***
+[00:00:00.000,457] <inf> main: Application tasks creating...
+[00:00:00.000,701] <inf> bt_sdc_hci_driver: SoftDevice Controller build revision:
+                                            36 f0 e5 0e 87 68 48 fb  02 fd 9f 82 cc 32 e5 7b |6....hH. .....2.{
+                                            91 b1 5c ed                                      |..\.
+[00:00:00.003,265] <inf> bt_hci_core: HW Platform: Nordic Semiconductor (0x0002)
+[00:00:00.003,295] <inf> bt_hci_core: HW Variant: nRF52x (0x0002)
+[00:00:00.003,326] <inf> bt_hci_core: Firmware: Standard Bluetooth controller (0x00) Version 54.58864 Build 1214809870
+[00:00:00.004,364] <inf> bt_hci_core: Identity: F9:79:83:E6:62:EC (random)
+[00:00:00.004,394] <inf> bt_hci_core: HCI: version 5.4 (0x0d) revision 0x118f, manufacturer 0x0059
+[00:00:00.004,425] <inf> bt_hci_core: LMP: version 5.4 (0x0d) subver 0x118f
+[00:00:00.004,425] <inf> BleTask: Begin advertising...
+[00:00:00.005,340] <inf> BleTask: Advertising successfully started!
+[00:00:18.546,325] <inf> BleTask: Client connected!
+[00:00:18.951,507] <wrn> bt_l2cap: Ignoring data for unknown channel ID 0x003a
+[00:00:24.120,239] <inf> bas: BAS Notifications enabled
+[00:00:26.460,144] <inf> hrs: HRS notifications enabled
+[00:00:45.899,505] <inf> bas: BAS Notifications disabled
+[00:00:51.389,312] <inf> hrs: HRS notifications disabled
+[00:00:53.324,462] <inf> BleTask: Client disconnected, reason=0x13
+
+Ctrl-C, exiting..

@@ -7,8 +7,8 @@
  *
  */
 
-#include <zephyr.h>
-#include <SysPerf.h>
+#include <zephyr/kernel.h>
+// #include <SysPerf.h>
 
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"
@@ -29,7 +29,7 @@ TASK_LOCAL void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_
 
     for (;;)
     {
-        SysPerf_RuntimeOverallStatistic();
+        // SysPerf_RuntimeOverallStatistic();
         k_msleep(SYSPERF_TASK_PERIOD);
     }
 }

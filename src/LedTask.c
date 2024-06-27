@@ -6,9 +6,9 @@
  *
  */
 
-#include <zephyr.h>
-#include <debug/thread_analyzer.h>
-#include <tracing/tracing.h>
+#include <zephyr/kernel.h>
+#include <zephyr/debug/thread_analyzer.h>
+#include <zephyr/tracing/tracing.h>
 
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"

@@ -9,7 +9,7 @@
 #ifndef SRC_COMMON_TASKS_API_H
 #define SRC_COMMON_TASKS_API_H
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/types.h>
 
 #define TASK_LOCAL static

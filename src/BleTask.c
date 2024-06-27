@@ -10,20 +10,20 @@
 
 #include <zephyr/types.h>
 #include <stddef.h>
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/conn.h>
-#include <bluetooth/uuid.h>
-#include <bluetooth/gatt.h>
-#include <bluetooth/services/bas.h>
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/hci.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/bluetooth/uuid.h>
+#include <zephyr/bluetooth/gatt.h>
+#include <zephyr/bluetooth/services/bas.h>
 
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"
 #include "common/ErrorCodes.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(BleTask, LOG_LEVEL_DBG);
 
 K_THREAD_STACK_DEFINE(BLE_Task_stack_area, BLE_TASK_STACKSIZE);
@@ -47,15 +47,14 @@ TASK_LOCAL void Ble_connected(struct bt_conn *conn, uint8_t errCode)
     }
     else
     {
-        LOG_INF("Connected!");
+        LOG_INF("Client connected!");
     }
 }
 
 TASK_LOCAL void Ble_disconnected(struct bt_conn *conn, uint8_t reason)
 {
-    LOG_INF("Disconnected, reason=0x%02x", reason);
+    LOG_INF("Client disconnected, reason=0x%02x", reason);
 }
-
 
 TASK_LOCAL void Ble_authCancel(struct bt_conn *conn)
 {
@@ -65,7 +64,6 @@ TASK_LOCAL void Ble_authCancel(struct bt_conn *conn)
 
     LOG_INF("Pairing cancelled: %s", bleAddress);
 }
-
 
 TASK_LOCAL void Ble_notifyBatteryLevel(void)
 {
