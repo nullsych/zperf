@@ -18,6 +18,8 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
  *                                             SYSPERF HEADERS                                                      *
  *******************************************************************************************************************/
 #include "SysPerf.h"
+#include "History.h"
+#include "SysPerf_DataTypes.h"
 
 /*******************************************************************************************************************
  *                                    MAIN SYSPERF STATISTIC ENTITIES                                              *
@@ -27,8 +29,6 @@ SP_LOCAL sp_TaskRuntime Hook_TasksStatistics[SP_TASK_COUNT];
 
 SP_LOCAL sp_TotalStat_t TraceCycle_UptimeStatistic;
 SP_LOCAL sp_TaskRuntime TraceCycle_TasksStatistics[SP_TASK_COUNT];
-
-SP_LOCAL sp_HookHistory Hook_History;
 
 /*******************************************************************************************************************
  *                                             SYSPERF LOCAL API                                                   *
@@ -47,86 +47,6 @@ SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskId, uint32 timestamp,
 SP_LOCAL_INLINE void SysPerf_UpdateUptimeStatistic(uint8 taskId, uint32 taskRuntime, sp_TaskRuntime *task);
 SP_LOCAL_INLINE void SysPerf_ResetTraceCycleStatistic(uint8 taskId);
 SP_LOCAL_INLINE void SysPerf_ResetHooksStatistic(uint8 taskId);
-SP_LOCAL_INLINE void SysPerf_HistoryInit(void);
-SP_LOCAL_INLINE uint8 SysPerf_HistoryUpdate(uint8, uint8, uint8);
-SP_LOCAL_INLINE uint8 SysPerf_HistoryGetLastState(void);
-SP_LOCAL_INLINE uint8 SysPerf_HistoryGetLastTask(void);
-SP_LOCAL_INLINE uint32 SysPerf_HistoryGetLastTimestamp(void);
-
-
-/*******************************************************************************************************************
- *                                       SYSPERF HOOKS IMPLEMENTATION                                              *
- *******************************************************************************************************************/
-
-SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
-{
-   uint8 taskId;
-
-   taskId = SysPerf_GetTaskId();
-
-   if (IS_TASK_VALID(taskId))
-   {
-      Hook_TasksStatistics[taskId].taskTimestamp = SysPerf_GetUptimeTimestamp();
-
-      Hook_History.history.entities[taskId].state = TASK_STATE_ENTER;
-      Hook_History.lastOsEvent = PRE_TASK_HOOK_EV;
-   }
-}
-
-SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
-{
-   uint32 timestamp;
-   uint32 taskRuntime;
-   uint8 taskId;
-
-   taskId = SysPerf_GetTaskId();
-
-   if (IS_TASK_VALID(taskId))
-   {
-      if (TASK_STATE_INTERRUPTED != Hook_History.history.entities[taskId].state)
-      {
-         timestamp = SysPerf_GetUptimeTimestamp();
-         taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
-         SysPerf_UpdateTaskStatistic(taskId, timestamp, taskRuntime);
-         Hook_History.history.entities[taskId].state = TASK_STATE_EXIT;
-         Hook_History.lastOsEvent = POST_TASK_HOOK_EV;
-      }
-   }
-}
-
-SP_RTOS_CALLED void SysPerf_PreISRHook(void)
-{
-   uint32 timestamp;
-   uint32 taskRuntime;
-   uint8 taskId;
-
-   taskId = SysPerf_HistoryGetLastTask();
-
-   Hook_History.lastOsEvent = POST_ISR_HOOK_EV;
-
-   /* trigger if last task was interrupted */
-   if ((IS_TASK_VALID(taskId)) && (TASK_STATE_ENTER == Hook_History.history.entities[taskId].state))
-   {
-      Hook_History.history.entities[taskId].state = TASK_STATE_INTERRUPTED;
-
-      timestamp = SysPerf_GetUptimeTimestamp();
-      taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
-
-      SysPerf_UpdateTaskStatistic(taskId, timestamp, taskRuntime);
-   }
-
-   // TODO: add support to measure ISR runtime
-}
-
-SP_RTOS_CALLED void SysPerf_PostISRHook(void)
-{
-   // TODO: add support to measure ISR runtime
-}
-
-SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
-{
-
-}
 
 /*******************************************************************************************************************
  *                                          USER API IMPLEMENTATION                                                *
@@ -142,6 +62,67 @@ SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
    SysPerf_TraceCycleStatistic();
    SysPerf_TraceUptimeStatistic();
    // SysPerf_TraceCpuUsage();
+   History_TraceCollected();
+   SysPerf_ResetRuntimeStatistic();
+}
+
+/*******************************************************************************************************************
+ *                                       SYSPERF HOOKS IMPLEMENTATION                                              *
+ *******************************************************************************************************************/
+
+SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
+{
+   uint8 taskId;
+   uint32 timestamp;
+
+   taskId = SysPerf_GetTaskId();
+
+   if (TASK_IS_VALID(taskId))
+   {
+      timestamp = SysPerf_GetUptimeTimestamp();
+      Hook_TasksStatistics[taskId].taskTimestamp = timestamp;
+      History_Update(taskId, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
+   }
+}
+
+SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
+{
+   uint32 timestamp;
+   uint32 taskRuntime;
+   uint8 taskId;
+
+   taskId = SysPerf_GetTaskId();
+
+   if (TASK_IS_VALID(taskId))
+   {
+      if (TASK_STATE_INTERRUPTED != History_GetLastEntityState(taskId))
+      {
+         timestamp = SysPerf_GetUptimeTimestamp();
+         taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
+         SysPerf_UpdateTaskStatistic(taskId, timestamp, taskRuntime);
+         // History_Update(taskId, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
+      }
+   }
+}
+
+SP_RTOS_CALLED void SysPerf_PreISRHook(void)
+{
+   // TODO: add support to measure ISR runtime
+}
+
+SP_RTOS_CALLED void SysPerf_PostISRHook(void)
+{
+   // TODO: add support to measure ISR runtime
+}
+
+SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
+{
+
+}
+
+SP_USER_CALLED void SysPerf_PreSchedulerInit(void)
+{
+   History_Init();
    SysPerf_ResetRuntimeStatistic();
 }
 
@@ -195,38 +176,6 @@ SP_LOCAL void SysPerf_IsrUnlock(unsigned int key)
 SP_LOCAL void SysPerf_TraceUptimeStatistic(void)
 {
    // TODO: same for SysPerf_TraceCycleStatistic
-}
-
-SP_LOCAL_INLINE uint8 SysPerf_HistoryGetLastState(void)
-{
-   return Hook_History.history.entities[Hook_History.history.idx].state;
-}
-
-SP_LOCAL_INLINE uint32 SysPerf_HistoryGetLastTimestamp(void)
-{
-   return Hook_History.history.entities[Hook_History.history.idx].timestamp;
-}
-
-SP_LOCAL_INLINE uint8 SysPerf_HistoryGetLastTask(void)
-{
-   return Hook_History.history.entities[Hook_History.history.idx].taskId;
-}
-
-SP_LOCAL_INLINE void SysPerf_HistoryInit(void)
-{
-   Hook_History.history.idx = 0U;
-   Hook_History.history.size = 0U;
-}
-
-SP_LOCAL uint8 SysPerf_HistoryUpdate(uint8 state, uint8 taskId, uint8 timestamp)
-{
-   Hook_History.history.entities[Hook_History.history.idx].state = state;
-   Hook_History.history.entities[Hook_History.history.idx].taskId = taskId;
-   Hook_History.history.entities[Hook_History.history.idx].timestamp = timestamp;
-
-   Hook_History.history.idx++;
-   Hook_History.history.idx %= SP_HISTORY_SIZE;
-   Hook_History.history.size = (Hook_History.history.size < SP_HISTORY_SIZE) ? (Hook_History.history.size + 1) : SP_HISTORY_SIZE;
 }
 
 SP_LOCAL void SysPerf_CycleBackup(void)

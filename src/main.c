@@ -17,6 +17,9 @@
 /* SysPerf's hooks, used under Zephyr's hooks */
 #include <SysPerf_RTOS_Wrapper.h>
 
+/* SysPerf's global API */
+#include <SysPerf.h>
+
 /* Rest of Zephyr's unsused hooks */
 #include "RTOSHooks.h"
 
@@ -25,6 +28,9 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 int main(void)
 {
+	LOG_INF("Perform pre-scheduler initializations for SysPerf");
+	SysPerf_PreSchedulerInit();
+
 	LOG_INF("Application tasks creating...");
 	Led_createTask();
 	Ble_createTask();

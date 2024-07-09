@@ -9,7 +9,7 @@
 #ifndef SRC_COMMON_TASKS_CFG_H
 #define SRC_COMMON_TASKS_CFG_H
 
-#define LED_TASK_PERIOD            (515U)  /* ms */
+#define LED_TASK_PERIOD            (510U)  /* ms */
 #define BLE_TASK_PERIOD            (1010U) /* ms */
 #define SYSPERF_TASK_PERIOD        (1000U) /* ms */
 
