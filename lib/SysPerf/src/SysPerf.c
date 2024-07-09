@@ -100,7 +100,7 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
          timestamp = SysPerf_GetUptimeTimestamp();
          taskRuntime = SysPerf_GetTaskRuntime(taskId, timestamp);
          SysPerf_UpdateTaskStatistic(taskId, timestamp, taskRuntime);
-         // History_Update(taskId, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
+         History_Update(taskId, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
       }
    }
 }
@@ -137,6 +137,16 @@ SP_LOCAL uint32 SysPerf_GetTimestampDelta(uint32 t1, uint32 t2)
 
 SP_LOCAL void SysPerf_TraceCpuUsage(void)
 {
+   // TODO: add calculations with TraceCycle_TasksStatistics[taskId].totalRuntime
+   SP_TRACE_INFO("# ######## CPU Usage  ######## #");
+   SP_TRACE_INFO("#                              #");
+   SP_TRACE_INFO("#   Task Id     |     CPU %    #");
+
+   for (uint8 taskId = 0; taskId < SP_TASK_NUM; taskId++)
+   {
+      // TODO: add tracing
+   }
+   SP_TRACE_INFO("# ############################ #\n");
 
 }
 
