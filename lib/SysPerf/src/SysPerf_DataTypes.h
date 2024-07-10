@@ -59,7 +59,7 @@ typedef enum
 } sp_IsrId;
 
 /* Hook statistic */
-typedef struct
+typedef struct SP_PACKED
 {
     uint32 timestamp;
     uint8 taskId;
@@ -67,7 +67,7 @@ typedef struct
 } sp_Hook;
 
 /* History handler */
-typedef struct
+typedef struct SP_PACKED
 {
     sp_Hook entities[SP_HISTORY_SIZE];
     uint32 idx;
@@ -75,21 +75,21 @@ typedef struct
 } sp_HistoryHandler;
 
 /* Hook history statistic */
-typedef struct
+typedef struct SP_PACKED
 {
     sp_HistoryHandler history;
     uint8 lastOsEvent;
 } sp_HookHistory;
 
 /* Configuration information of a task */
-typedef struct
+typedef struct SP_PACKED
 {
     sp_TaskPrio priority;
     sp_TaskStackSize stackSize;
 } sp_TaskConfigInfo;
 
 /* Task runtime information */
-typedef struct
+typedef struct SP_PACKED
 {
     uint32 totalRuntime;
     uint32 maxRuntime;
@@ -99,7 +99,7 @@ typedef struct
 } sp_TaskRuntime;
 
 /* Runtime information of a ISR */
-typedef struct
+typedef struct SP_PACKED
 {
     uint32 runtime;
     uint32 maxRuntime;
@@ -107,7 +107,7 @@ typedef struct
 } sp_IsrRuntime;
 
 /* Total statistic */
-typedef struct
+typedef struct SP_PACKED
 {
     uint32 TotalTasksRuntime[SP_TASK_COUNT];
     uint32 TotalTasksSwitches[SP_TASK_COUNT];

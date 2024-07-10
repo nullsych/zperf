@@ -16,8 +16,8 @@
 *******************************************************************************************************************/
 #define SP_LOCAL                            static
 #define SP_LOCAL_INLINE                     static inline
-// #define SP_PACKED                           __packed
-// #define SP_ALIGNED(x)                       __aligned(x)
+#define SP_PACKED                           __packed
+#define SP_ALIGNED(x)                       __aligned(x)
 
 #define SP_RTOS_CALLED                      /* API used within RTOS hooks */
 #define SP_USER_CALLED                      /* API used within user application code */
