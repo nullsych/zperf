@@ -11,6 +11,7 @@
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <zephyr/sys/util.h>
+#include <SysPerf.h>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
@@ -30,8 +31,8 @@ K_THREAD_STACK_DEFINE(BLE_Task_stack_area, BLE_TASK_STACKSIZE);
 
 TASK_LOCAL struct k_thread Ble_zthread_data;
 TASK_LOCAL k_tid_t Ble_zid;
-
 TASK_LOCAL uint8_t Ble_taskId = BLE_TASKID;
+TASK_LOCAL const char *Ble_taskName = "Task_BLE";
 
 TASK_LOCAL const struct bt_data Ble_advertisingData[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -140,7 +141,7 @@ TASK_LOCAL void Ble_main(void)
     }
 }
 
-TASK_LOCAL void Task_BLE(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL TASK_ENTRY_POINT void Task_BLE(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
     ARG_UNUSED(unused_arg1);
     ARG_UNUSED(unused_arg2);
@@ -158,7 +159,11 @@ void Ble_createTask(void)
                               Task_BLE, NULL, NULL, NULL,
                               BLE_TASK_PRIORITY, 0, K_FOREVER);
 
-    k_thread_name_set(Ble_zid, "Task_BLE");
+    k_thread_name_set(Ble_zid, Ble_taskName);
+
+    LOG_INF("BLE Task starting, zid: 0x%x", (unsigned int)Ble_zid);
+
+    SysPerf_InitTaskData(Ble_taskId, (unsigned int)Ble_zid, Ble_taskName, BLE_TASK_PRIORITY, BLE_TASK_STACKSIZE);
 
     k_thread_start(Ble_zid);
 }

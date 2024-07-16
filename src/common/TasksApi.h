@@ -12,7 +12,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/types.h>
 
-#define TASK_LOCAL static
+#define TASK_LOCAL          static
+#define TASK_ENTRY_POINT
 
 void Led_createTask(void);
 void Ble_createTask(void);

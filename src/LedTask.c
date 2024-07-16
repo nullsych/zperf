@@ -9,18 +9,23 @@
 #include <zephyr/kernel.h>
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/tracing/tracing.h>
+#include <SysPerf.h>
 
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"
 #include "common/Leds/Leds.h"
+
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(LedTask, LOG_LEVEL_DBG);
 
 K_THREAD_STACK_DEFINE(LED_Task_stack_area, LED_TASK_STACKSIZE);
 
 TASK_LOCAL struct k_thread Led_zthread_data;
 TASK_LOCAL k_tid_t Led_zid;
 TASK_LOCAL uint8_t Led_taskId = LED_TASKID;
+TASK_LOCAL const char *Led_taskName = "Task_LED";
 
-TASK_LOCAL void Task_LED(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL TASK_ENTRY_POINT void Task_LED(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
    ARG_UNUSED(unused_arg1);
    ARG_UNUSED(unused_arg2);
@@ -43,7 +48,11 @@ void Led_createTask(void)
                              Task_LED, NULL, NULL, NULL,
                              LED_TASK_PRIORITY, 0, K_FOREVER);
 
-   k_thread_name_set(Led_zid, "Task_LED");
+   k_thread_name_set(Led_zid, Led_taskName);
+
+   LOG_INF("LED Task starting, zid: 0x%x", (unsigned int)Led_zid);
+
+   SysPerf_InitTaskData(Led_taskId, (unsigned int)Led_zid, Led_taskName, LED_TASK_PRIORITY, LED_TASK_STACKSIZE);
 
    k_thread_start(Led_zid);
 }

@@ -32,9 +32,9 @@ SP_LOCAL sp_HookHistory Hook_History;
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-SP_HOOK_CALLED uint8 History_GetLastEntityState(uint8 taskId)
+SP_HOOK_CALLED uint8 History_GetLastEntityState(uint8 taskIterator)
 {
-    return Hook_History.history.entities[taskId].state;
+    return Hook_History.history.entities[taskIterator].state;
 }
 
 SP_HOOK_CALLED uint8 History_GetLastState(void)
@@ -49,7 +49,7 @@ SP_HOOK_CALLED uint32 History_GetLastTimestamp(void)
 
 SP_HOOK_CALLED uint8 History_GetLastTask(void)
 {
-   return Hook_History.history.entities[Hook_History.history.idx].taskId;
+   return Hook_History.history.entities[Hook_History.history.idx].taskIterator;
 }
 
 SP_HOOK_CALLED void History_Init(void)
@@ -58,14 +58,14 @@ SP_HOOK_CALLED void History_Init(void)
    Hook_History.history.size = 0U;
 }
 
-SP_HOOK_CALLED void History_Update(uint8 taskId, uint32 timestamp, uint8 state, uint8 lastOsEvent)
+SP_HOOK_CALLED void History_Update(uint8 taskIterator, uint64 timestamp, uint8 state, uint8 lastOsEvent)
 {
    sp_Hook *currentEntity = &Hook_History.history.entities[Hook_History.history.idx];
 
    if (currentEntity != NULL)
    {
       currentEntity->state = state;
-      currentEntity->taskId = taskId;
+      currentEntity->taskIterator = taskIterator;
       currentEntity->timestamp = timestamp;
 
       Hook_History.lastOsEvent = lastOsEvent;
@@ -84,7 +84,7 @@ SP_USER_CALLED void History_TraceCollected(void)
    for (uint32 idx = 0; idx < Hook_History.history.size; idx++)
    {
       SP_TRACE_INFO("%s %8u %17u %18u %5s",
-                    "#", Hook_History.history.entities[idx].taskId, Hook_History.history.entities[idx].state,
+                    "#", Hook_History.history.entities[idx].taskIterator, Hook_History.history.entities[idx].state,
                     Hook_History.history.entities[idx].timestamp, "#");
    }
    SP_TRACE_INFO("# ################################################# #\n");

@@ -9,7 +9,7 @@
 #ifndef SRC_COMMON_TASKS_CFG_H
 #define SRC_COMMON_TASKS_CFG_H
 
-#define LED_TASK_PERIOD            (510U)  /* ms */
+#define LED_TASK_PERIOD            (255U)  /* ms */
 #define BLE_TASK_PERIOD            (1010U) /* ms */
 #define SYSPERF_TASK_PERIOD        (1000U) /* ms */
 
@@ -21,15 +21,15 @@
 /**
  * Scheduling priority used by each thread (descending order defined).
  * @details Numerically lower priorities takes precedence over numerically higher values.
- *          e.g. A-thread with 2 value has higher priority than B-thread with 5 value.
+ *          e.g. X-thread with 2 value has higher priority than Y-thread with 5 value.
 */
 #define BLE_TASK_PRIORITY          (3U)
 #define SYSPERF_TASK_PRIORITY      (5U)
 #define LED_TASK_PRIORITY          (7U)
 
 /* Custom task id used by each thread */
-#define LED_TASKID                 (0U)
-#define BLE_TASKID                 (1U)
-#define SYSPERF_TASKID             (2U)
+#define LED_TASKID                 (0x00)
+#define BLE_TASKID                 (0x01)
+#define SYSPERF_TASKID             (0x02)
 
 #endif /* SRC_COMMON_TASKS_CFG_H */

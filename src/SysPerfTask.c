@@ -13,13 +13,17 @@
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(SysPerfTask, LOG_LEVEL_DBG);
+
 K_THREAD_STACK_DEFINE(SysPerf_Task_stack_area, SYSPERF_TASK_STACKSIZE);
 
 TASK_LOCAL struct k_thread SysPerf_zthread_data;
 TASK_LOCAL k_tid_t SysPerf_zid;
 TASK_LOCAL uint8_t SysPerf_taskId = SYSPERF_TASKID;
+TASK_LOCAL const char *SysPerf_taskName = "Task_SysPerf";
 
-TASK_LOCAL void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL TASK_ENTRY_POINT void Task_SysPerf(void *unused_arg1, void *unused_arg2, void *unused_arg3)
 {
     ARG_UNUSED(unused_arg1);
     ARG_UNUSED(unused_arg2);
@@ -39,9 +43,13 @@ void SysPerf_createTask(void)
     SysPerf_zid = k_thread_create(&SysPerf_zthread_data, SysPerf_Task_stack_area,
                                   K_THREAD_STACK_SIZEOF(SysPerf_Task_stack_area),
                                   Task_SysPerf, NULL, NULL, NULL,
-                                  SYSPERF_TASK_PRIORITY, 0, K_FOREVER);
+                                  SYSPERF_TASK_PRIORITY, 0, K_SECONDS(1));
 
-    k_thread_name_set(SysPerf_zid, "Task_LED");
+    k_thread_name_set(SysPerf_zid, SysPerf_taskName);
+
+    LOG_INF("SysPerf Task starting, zid: 0x%x", (unsigned int)SysPerf_zid);
+
+    SysPerf_InitTaskData(SysPerf_taskId, (unsigned int)SysPerf_zid, SysPerf_taskName, SYSPERF_TASK_PRIORITY, SYSPERF_TASK_STACKSIZE);
 
     k_thread_start(SysPerf_zid);
 }

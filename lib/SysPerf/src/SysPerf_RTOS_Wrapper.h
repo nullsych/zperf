@@ -41,7 +41,7 @@ void sys_trace_isr_enter_user(void)
 
 void sys_trace_isr_exit_user(void)
 {
-   /* code */
+   SysPerf_PostISRHook();
 }
 
 void sys_trace_idle_user(void)

@@ -38,9 +38,9 @@
 *                                           RTOS-SPECIFIC CONTANTS                                                 *
 *******************************************************************************************************************/
 /** @details: Map RTOS-specific constants **/
-#define MAP_RTOS_TASKS_COUNT                (3u)                        /* Number of tasks, runnings in system    */
+#define MAP_RTOS_TASKS_COUNT                (0x03)                      /* Number of tasks, runnings in system    */
 #define MAP_RTOS_ISRS_COUNT                 (0u)                        /* Number of ISRs, runnings in system     */
-#define MAP_RTOS_UPTIME_TOP                 (0xFFFFFFul)                /* Zephyr timer top value                 */
+#define MAP_RTOS_UPTIME_TOP                 (0xFFFFFFFF)                /* Zephyr timer top value                 */
 #define MAP_RTOS_TASK_MAX_NAME_LEN          CONFIG_THREAD_MAX_NAME_LEN  /* Zephyr tasks max len of name           */
 
 
@@ -52,6 +52,7 @@
 #define MAP_RTOS_PTR2ISR
 #define MAP_RTOS_PRIO                       int
 #define MAP_RTOS_STACKSIZE                  int
+#define MAP_RTOS_UNIQ_ID                    uint64_t
 
 typedef uint64_t                            uint64;
 typedef uint32_t                            uint32;
