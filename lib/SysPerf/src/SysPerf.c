@@ -67,7 +67,7 @@ SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
    SysPerf_CycleBackup();
 
    SysPerf_TraceCycleStatistic();
-   SysPerf_TraceUptimeStatistic();
+   // SysPerf_TraceUptimeStatistic();
    // SysPerf_TraceCpuUsage();
    // History_TraceCollected();
    SysPerf_ResetRuntimeStatistic();
@@ -183,17 +183,32 @@ SP_LOCAL uint64 SysPerf_GetTimestampDelta(uint64 t1, uint64 t2)
 
 SP_LOCAL void SysPerf_TraceCpuUsage(void)
 {
-   // TODO: add calculations with TraceCycle_TasksStatistics[taskIterator].totalRuntime
-   // SP_TRACE_INFO("# ######## CPU Usage  ######## #");
-   // SP_TRACE_INFO("#                              #");
-   // SP_TRACE_INFO("#   Task Id     |     CPU %    #");
+   uint32 timeslice;
+   uint64 currTimestamp;
+   static uint64 lastTimestamp;
 
-   // for (uint8 taskIterator = 0; taskIterator < SP_TASK_NUM; taskIterator++)
-   // {
-   //    // TODO: add tracing
-   // }
-   // SP_TRACE_INFO("# ############################ #\n");
+   /* Percentage with application total runtime per timeslice */
+   uint32 cpuLoad;
+   /* Percentage with idle total runtime per timeslice */
+   uint32 idleTime;
+   /* Application tasks total runtime per timeslice */
+   uint32 appTotalRuntime = 0U;
+   /* Idle task(s) total runtime per timeslice */
+   uint32 idleTotalRuntime = 0U;
 
+   currTimestamp = SysPerf_GetUptimeTimestamp();
+   timeslice = (uint32)SysPerf_GetTimestampDelta(lastTimestamp, currTimestamp);
+   lastTimestamp = currTimestamp;
+
+   for (uint8 taskIterator = 0; taskIterator < SP_TASK_NUM; taskIterator++)
+   {
+      appTotalRuntime += TraceCycle_TasksStatistics[taskIterator].totalRuntime;
+   }
+
+   cpuLoad = GET_CPULOAD(timeslice, appTotalRuntime);
+   idleTotalRuntime = timeslice - appTotalRuntime; // TODO: rewrite with SysPerf_IdleTaskRunning routine calculations
+   idleTime = GET_IDLETIME(timeslice, idleTotalRuntime);
+   SP_TRACE_INFO("# ######### CPU LOAD %d%% ### IDLE %d%% ######### #\n", cpuLoad, idleTime);
 }
 
 SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskIterator, uint64 timestamp, uint32 taskRuntime)
@@ -243,9 +258,6 @@ SP_LOCAL void SysPerf_CycleBackup(void)
    SysPerf_IsrUnlock(key);
 }
 
-// 16 777 307
-// 1 000 611
-
 SP_LOCAL void SysPerf_TraceCycleStatistic(void)
 {
    uint64 timeslice;
@@ -267,7 +279,7 @@ SP_LOCAL void SysPerf_TraceCycleStatistic(void)
                     TraceCycle_TasksStatistics[taskIterator].maxRuntime, TraceCycle_TasksStatistics[taskIterator].taskSwitches, "#");
    }
    SP_TRACE_INFO("# ############################################################################ #");
-   SP_TRACE_INFO("# ### Calculations Timeslice: %u\n", timeslice);
+   SP_TRACE_INFO("# ### Calculations Timeslice: %llu\n", timeslice);
 }
 
 SP_LOCAL void SysPerf_ResetRuntimeStatistic(void)
@@ -309,7 +321,7 @@ SP_LOCAL uint64 SysPerf_GetUptimeTimestamp(void)
    uint64 timeStamp;
    timeStamp = k_uptime_ticks();
    timeStamp = k_ticks_to_us_near64(timeStamp);
-   return timeStamp; /* in uS*/
+   return timeStamp; /* in uS */
 }
 
 SP_LOCAL bool SysPerf_CheckTaskId(uint8 taskIterator, unsigned int *taskId)
