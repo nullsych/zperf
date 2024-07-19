@@ -20,24 +20,46 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 #include "SysPerf.h"
 #include "History.h"
 #include "SysPerf_DataTypes.h"
+#include "SysPerf_RTOS_Wrapper.h"
 
 /*******************************************************************************************************************
  *                                    MAIN SYSPERF STATISTIC ENTITIES                                              *
  *******************************************************************************************************************/
-SP_LOCAL sp_TotalStat_t Hook_UptimeStatistic;
+
+/**
+ * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle.
+ * @details All collected data later copied to TraceCycle_UptimeStatistic.
+ */
+SP_LOCAL sp_UptimeStat_t Hook_UptimeStatistic;
+
+/**
+ * @brief Intermediate storage for tasks runtime statistic, reseted within 1 trace cycle.
+ * @details All collected data later copied to TraceCycle_TasksStatistics.
+ */
 SP_LOCAL sp_TaskRuntime Hook_TasksStatistics[SP_TASK_COUNT];
+
+/**
+ * @brief Store configuration information of all tasks, used as reference.
+ */
 SP_LOCAL sp_TaskConfigInfo Tasks_ConfigInfo[SP_TASK_COUNT];
-SP_LOCAL sp_TotalStat_t TraceCycle_UptimeStatistic;
+
+/**
+ * @brief Store a copy of uptime statistic when SysPerf_CycleBackup() routine occurs.
+ * @details Used to trace all collected information to avoid race condition in rescheduling points.
+ */
+SP_LOCAL sp_UptimeStat_t TraceCycle_UptimeStatistic;
+
+/**
+ * @brief Store a copy of tasks runtime statistic when SysPerf_CycleBackup() routine occurs.
+ * @details Used to trace all collected information to avoid race condition in rescheduling points.
+ */
 SP_LOCAL sp_TaskRuntime TraceCycle_TasksStatistics[SP_TASK_COUNT];
 
 /*******************************************************************************************************************
  *                                             SYSPERF LOCAL API                                                   *
  *******************************************************************************************************************/
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskIterator, uint32 timeStamp);
-SP_LOCAL uint64 SysPerf_GetUptimeTimestamp(void);
 SP_LOCAL uint64 SysPerf_GetTimestampDelta(uint64, uint64);
-SP_LOCAL unsigned int SysPerf_GetTaskId(void);
-SP_LOCAL uint8 SysPerf_GetTaskIterator(void);
 SP_LOCAL bool SysPerf_CheckTaskId(uint8 taskIterator, unsigned int *taskId);
 
 SP_LOCAL void SysPerf_CycleBackup(void);
@@ -229,9 +251,9 @@ SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskIterator, uint64 time
 
 SP_LOCAL_INLINE void SysPerf_UpdateUptimeStatistic(uint8 taskIterator, uint32 taskRuntime, sp_TaskRuntime *taskPtr)
 {
-   Hook_UptimeStatistic.TotalTasksRuntime[taskIterator] += taskRuntime;
+   Hook_UptimeStatistic.TasksRuntime[taskIterator] += taskRuntime;
    Hook_UptimeStatistic.MaxTasksRuntime[taskIterator] = taskPtr->maxRuntime;
-   Hook_UptimeStatistic.TotalTasksSwitches[taskIterator] += taskPtr->taskSwitches;
+   Hook_UptimeStatistic.TasksSwitches[taskIterator] += taskPtr->taskSwitches;
 }
 
 SP_LOCAL void SysPerf_IsrLock(unsigned int *key)
@@ -316,33 +338,9 @@ SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskIterator, uint32 timeStamp)
    return taskRuntime;
 }
 
-SP_LOCAL uint64 SysPerf_GetUptimeTimestamp(void)
-{
-   uint64 timeStamp;
-   timeStamp = k_uptime_ticks();
-   timeStamp = k_ticks_to_us_near64(timeStamp);
-   return timeStamp; /* in uS */
-}
-
 SP_LOCAL bool SysPerf_CheckTaskId(uint8 taskIterator, unsigned int *taskId)
 {
    *taskId = SysPerf_GetTaskId();
    return (bool)(Tasks_ConfigInfo[taskIterator].taskId == (*taskId));
 }
 
-/**
- * @brief Get unique ID (RTOS specific) of the current task.
- */
-SP_LOCAL unsigned int SysPerf_GetTaskId(void)
-{
-   /* Recomendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect */
-   return (unsigned int)k_sched_current_thread_query();
-}
-
-/**
- * @brief Get current task index (SysPerf specific), embedded in task configuration
- */
-SP_LOCAL uint8 SysPerf_GetTaskIterator(void)
-{
-   return (uint8)k_thread_custom_data_get();
-}

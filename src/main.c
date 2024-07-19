@@ -15,7 +15,7 @@
 #include "common/TasksApi.h"
 
 /* SysPerf's hooks, used under Zephyr's hooks */
-#include <SysPerf_RTOS_Wrapper.h>
+#include <SysPerf_RTOS_SystemHooks.h>
 
 /* SysPerf's global API */
 #include <SysPerf.h>
@@ -26,26 +26,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
-// #define HASH_SIZE 32u /* 32 bytes for 256 hash */
-
-// typedef struct
-// {
-//    volatile const uint8_t sha256[HASH_SIZE];
-// } Hash_t;
-
-// const Hash_t firmware_hash =
-// {
-//    {
-//       0x12 , 0x34 , 0x56 , 0x78 , 0x90 , 0x11 , 0x12 , 0x12 ,
-//       0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 ,
-//       0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 ,
-//       0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12 , 0x12
-//    }
-// };
-
 int main(void)
 {
-	// LOG_HEXDUMP_INF("Firmware hash version: %X", firmware_hash);
+	// LOG_HEXDUMP_INF("Firmware hash version: %X", firmware_hash); // TODO: implement onboard firmware SHA calculation
 	LOG_INF("Perform pre-scheduler initializations for SysPerf");
 	SysPerf_PreSchedulerInit();
 

@@ -1,15 +1,8 @@
 /**
  * @file   SysPerf_RTOS_Wrapper.h
- * @brief  Implement RTOS-specific hook functions with wrapped SysPerf ones
+ * @brief  Implementation of wrappers that encapsulate RTOS-specific API.
  * @author kvant6ubl
- * @date   May 6, 2024
- *
- * Use next template to define RTOS-specific hook function's body:
- *
- * Os_Hook_Function (...)
- * {
- *    SysPerf__Hook(...);
- * }
+ * @date   Jul 18, 2024
  *
  */
 
@@ -24,29 +17,29 @@
 
 #include "SysPerf.h"
 
-void sys_trace_thread_switched_in_user(void)
+/**
+ * @brief Get unique ID (RTOS specific) of the current task.
+ */
+unsigned int SysPerf_GetTaskId(void)
 {
-   SysPerf_PreTaskHook();
+   /* Recomendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect */
+   return (unsigned int)k_sched_current_thread_query();
 }
 
-void sys_trace_thread_switched_out_user(void)
+/**
+ * @brief Get current task index (SysPerf specific), embedded in task configuration
+ */
+uint8 SysPerf_GetTaskIterator(void)
 {
-   SysPerf_PostTaskHook();
+   return (uint8)k_thread_custom_data_get();
 }
 
-void sys_trace_isr_enter_user(void)
+uint64 SysPerf_GetUptimeTimestamp(void)
 {
-   SysPerf_PreISRHook();
-}
-
-void sys_trace_isr_exit_user(void)
-{
-   SysPerf_PostISRHook();
-}
-
-void sys_trace_idle_user(void)
-{
-   SysPerf_IdleTaskRunning();
+   uint64 timeStamp;
+   timeStamp = k_uptime_ticks();
+   timeStamp = k_ticks_to_us_near64(timeStamp);
+   return timeStamp; /* in uS */
 }
 
 #endif /* SYSPERF_RTOS_WRAPPER_H */

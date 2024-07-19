@@ -106,13 +106,12 @@ typedef struct SP_PACKED
 /* Total statistic */
 typedef struct SP_PACKED
 {
-    uint32 TotalTasksRuntime[SP_TASK_COUNT];
-    uint32 TotalTasksSwitches[SP_TASK_COUNT];
+    uint32 TasksRuntime[SP_TASK_COUNT];
+    uint32 TasksSwitches[SP_TASK_COUNT];
     uint32 MaxTasksRuntime[SP_TASK_COUNT];
-    uint32 TotalIsrRuntime[SP_TASK_COUNT];
-    uint32 TotalIdleRuntime;
-    uint32 statisticTracedTimestamp;
-    bool IdleWasRunning;
-} sp_TotalStat_t;
+    uint32 IsrRuntime[SP_TASK_COUNT];
+    uint32 IdleRuntime;
+    uint32 timestamp;
+} sp_UptimeStat_t;
 
 #endif /* SYSPERFDATATYPES_H */
