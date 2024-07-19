@@ -41,9 +41,9 @@ typedef enum
 /* Task states */
 typedef enum
 {
-    TASK_STATE_ENTER       = 0x00,
-    TASK_STATE_EXIT        = 0x01,
-    TASK_STATE_INTERRUPTED = 0x02
+    TASK_STATE_ENTER          = 0x00, /* Event written when new task take take precedence and start works */
+    TASK_STATE_EXIT           = 0x01, /* Event written when current task finished it work, and new one take take precedence */
+    TASK_STATE_INTERRUPTED    = 0x02, /* Event written when task start works that was interrupted by ISR */
 } sp_TaskState;
 
 /* SysPerf ISR indexes */
@@ -61,18 +61,10 @@ typedef struct SP_PACKED
     uint8 state;
 } sp_Hook;
 
-/* History handler */
+/* History statistic */
 typedef struct SP_PACKED
 {
     sp_Hook entities[SP_HISTORY_SIZE];
-    uint32 idx;
-    uint32 size;
-} sp_HistoryHandler;
-
-/* Hook history statistic */
-typedef struct SP_PACKED
-{
-    sp_HistoryHandler history;
     uint8 lastOsEvent;
 } sp_HookHistory;
 

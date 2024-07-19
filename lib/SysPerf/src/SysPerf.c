@@ -30,30 +30,30 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
  * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle.
  * @details All collected data later copied to TraceCycle_UptimeStatistic.
  */
-SP_LOCAL sp_UptimeStat_t Hook_UptimeStatistic;
+SP_LOCAL sp_UptimeStat_t      Hook_UptimeStatistic;
 
 /**
  * @brief Intermediate storage for tasks runtime statistic, reseted within 1 trace cycle.
  * @details All collected data later copied to TraceCycle_TasksStatistics.
  */
-SP_LOCAL sp_TaskRuntime Hook_TasksStatistics[SP_TASK_COUNT];
+SP_LOCAL sp_TaskRuntime       Hook_TasksStatistics[SP_TASK_COUNT];
 
 /**
  * @brief Store configuration information of all tasks, used as reference.
  */
-SP_LOCAL sp_TaskConfigInfo Tasks_ConfigInfo[SP_TASK_COUNT];
+SP_LOCAL sp_TaskConfigInfo    Tasks_ConfigInfo[SP_TASK_COUNT];
 
 /**
  * @brief Store a copy of uptime statistic when SysPerf_CycleBackup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SP_LOCAL sp_UptimeStat_t TraceCycle_UptimeStatistic;
+SP_LOCAL sp_UptimeStat_t      TraceCycle_UptimeStatistic;
 
 /**
  * @brief Store a copy of tasks runtime statistic when SysPerf_CycleBackup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SP_LOCAL sp_TaskRuntime TraceCycle_TasksStatistics[SP_TASK_COUNT];
+SP_LOCAL sp_TaskRuntime       TraceCycle_TasksStatistics[SP_TASK_COUNT];
 
 /*******************************************************************************************************************
  *                                             SYSPERF LOCAL API                                                   *
@@ -107,7 +107,6 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
 
    taskIterator = SysPerf_GetTaskIterator();
 
-   // if (TASK_IS_VALID(taskIterator) && SysPerf_CheckTaskId(taskIterator))
    if (TASK_IS_VALID(taskIterator))
    {
       if (SysPerf_CheckTaskId(taskIterator, &taskId))
@@ -118,12 +117,12 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
       }
       else
       {
-         // SP_TRACE_INFO("### SysPerf_PreTaskHook -> invalid taskId: 0x%x", taskId);
+         // TODO: add collecting diagnostic data to history
       }
    }
    else
    {
-      SP_TRACE_INFO("### SysPerf_PreTaskHook -> invalid taskIterator: %d", taskIterator);
+      // TODO: add collecting diagnostic data to history
    }
 }
 
@@ -136,10 +135,8 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
 
    taskIterator = SysPerf_GetTaskIterator();
 
-   // if (TASK_IS_VALID(taskIterator) && SysPerf_CheckTaskId(taskIterator))
    if (TASK_IS_VALID(taskIterator))
    {
-      // if (TASK_STATE_INTERRUPTED != History_GetLastEntityState(taskIterator))
       if (SysPerf_CheckTaskId(taskIterator, &taskId))
       {
          timestamp = SysPerf_GetUptimeTimestamp();
@@ -149,12 +146,12 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
       }
       else
       {
-         // SP_TRACE_INFO("### SysPerf_PostTaskHook -> invalid taskId: 0x%x", taskId);
+         // TODO: add collecting diagnostic data to history
       }
    }
    else
    {
-      SP_TRACE_INFO("### SysPerf_PostTaskHook -> invalid taskIterator: %d", taskIterator);
+      // TODO: add collecting diagnostic data to history
    }
 }
 
