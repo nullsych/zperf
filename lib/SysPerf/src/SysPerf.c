@@ -18,22 +18,23 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
  *                                             SYSPERF HEADERS                                                      *
  *******************************************************************************************************************/
 #include "SysPerf.h"
-#include "History.h"
+#include "SysPerf_History.h"
 #include "SysPerf_DataTypes.h"
 #include "SysPerf_RTOS_Wrapper.h"
+#include "SysPerf_Cfg.cfg"
 
 /*******************************************************************************************************************
  *                                    MAIN SYSPERF STATISTIC ENTITIES                                              *
  *******************************************************************************************************************/
 
 /**
- * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle.
+ * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle (SP-cycle).
  * @details All collected data later copied to TraceCycle_UptimeStatistic.
  */
 SP_LOCAL sp_UptimeStat_t      Hook_UptimeStatistic;
 
 /**
- * @brief Intermediate storage for tasks runtime statistic, reseted within 1 trace cycle.
+ * @brief Intermediate storage for tasks runtime statistic, reseted within 1 trace cycle (SP-cycle).
  * @details All collected data later copied to TraceCycle_TasksStatistics.
  */
 SP_LOCAL sp_TaskRuntime       Hook_TasksStatistics[SP_TASK_COUNT];
@@ -82,16 +83,29 @@ SP_LOCAL_INLINE void SysPerf_ResetHooksStatistic(uint8 taskIterator);
  *******************************************************************************************************************/
 
 /**
- * @brief Trace Tasks & ISRs runtime statistic per 1 second (cycle). This function need to be called each 1 second.
+ * @brief Trace Tasks & ISRs runtime statistic per SP-cycle.
+ * //TODO: rewr later: This function needs to be called each 1 second.
  */
 SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 {
    SysPerf_CycleBackup();
 
+#if (SP_CFG_TRACE_MAIN_STAT == SP_F_ON)
    SysPerf_TraceCycleStatistic();
-   // SysPerf_TraceUptimeStatistic();
-   // SysPerf_TraceCpuUsage();
-   // History_TraceCollected();
+#endif
+
+#if (SP_CFG_TRACE_UPTIME == SP_F_ON)
+   SysPerf_TraceUptimeStatistic();
+#endif
+
+#if (SP_CFG_TRACE_CPU_LOAD == SP_F_ON)
+   SysPerf_TraceCpuUsage();
+#endif
+
+#if (SP_CFG_TRACE_HISTORY == SP_F_ON)
+   SysPerfHistory_TraceCollected();
+#endif
+
    SysPerf_ResetRuntimeStatistic();
 }
 
@@ -113,7 +127,7 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
       {
          timestamp = SysPerf_GetUptimeTimestamp();
          Hook_TasksStatistics[taskIterator].taskTimestamp = timestamp;
-         History_Update(taskIterator, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
+         SysPerfHistory_Update(taskIterator, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
       }
       else
       {
@@ -142,7 +156,7 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
          timestamp = SysPerf_GetUptimeTimestamp();
          taskRuntime = SysPerf_GetTaskRuntime(taskIterator, timestamp);
          SysPerf_UpdateTaskStatistic(taskIterator, timestamp, taskRuntime);
-         History_Update(taskIterator, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
+         SysPerfHistory_Update(taskIterator, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
       }
       else
       {
@@ -187,7 +201,7 @@ SP_USER_CALLED void SysPerf_InitTaskData(uint8 taskIterator, unsigned int taskId
 
 SP_USER_CALLED void SysPerf_PreSchedulerInit(void)
 {
-   History_Init();
+   SysPerfHistory_Init();
    SysPerf_ResetRuntimeStatistic();
 }
 

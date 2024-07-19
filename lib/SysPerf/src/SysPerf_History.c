@@ -12,14 +12,14 @@
 #include <stdlib.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(SysPerf_History, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(SysPerfHistory_, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
  *                                                SYSPERF HEADERS                                                  *
  *******************************************************************************************************************/
 #include "SysPerf.h"
 #include "SysPerf_DataTypes.h"
-#include "History.h"
+#include "SysPerf_History.h"
 
 /*******************************************************************************************************************
  *                                              STATISTIC ENTITIES                                                 *
@@ -46,33 +46,33 @@ SP_LOCAL uint32            HistorySize = 0U;
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-SP_HOOK_CALLED uint8 History_GetLastEntityState(uint8 taskIterator)
+SP_HOOK_CALLED uint8 SysPerfHistory_GetLastEntityState(uint8 taskIterator)
 {
-    return HistoryHandler.entities[taskIterator].state;
+   return HistoryHandler.entities[taskIterator].state;
 }
 
-SP_HOOK_CALLED uint8 History_GetLastState(void)
+SP_HOOK_CALLED uint8 SysPerfHistory_GetLastState(void)
 {
    return HistoryHandler.entities[HistoryIndex].state;
 }
 
-SP_HOOK_CALLED uint32 History_GetLastTimestamp(void)
+SP_HOOK_CALLED uint32 SysPerfHistory_GetLastTimestamp(void)
 {
    return HistoryHandler.entities[HistoryIndex].timestamp;
 }
 
-SP_HOOK_CALLED uint8 History_GetLastTask(void)
+SP_HOOK_CALLED uint8 SysPerfHistory_GetLastTask(void)
 {
    return HistoryHandler.entities[HistoryIndex].taskIterator;
 }
 
-SP_HOOK_CALLED void History_Init(void)
+SP_HOOK_CALLED void SysPerfHistory_Init(void)
 {
    HistoryIndex = 0U;
    HistorySize  = 0U;
 }
 
-SP_HOOK_CALLED void History_Update(uint8 taskIterator, uint64 timestamp, uint8 state, uint8 lastOsEvent)
+SP_HOOK_CALLED void SysPerfHistory_Update(uint8 taskIterator, uint64 timestamp, uint8 state, uint8 lastOsEvent)
 {
    sp_Hook *currentEntity = &HistoryHandler.entities[HistoryIndex];
 
@@ -89,9 +89,9 @@ SP_HOOK_CALLED void History_Update(uint8 taskIterator, uint64 timestamp, uint8 s
    }
 }
 
-SP_USER_CALLED void History_TraceCollected(void)
+SP_USER_CALLED void SysPerfHistory_TraceCollected(void)
 {
-   SP_TRACE_INFO("# ############### Collected HistoryHandler ############### #");
+   SP_TRACE_INFO("# ############### Collected History ############### #");
    SP_TRACE_INFO("#                                                   #");
    SP_TRACE_INFO("#    Task Id             State         Timestamp    #");
 

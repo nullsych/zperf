@@ -75,7 +75,6 @@ typedef struct SP_PACKED
     sp_TaskPrio priority;
     sp_TaskStackSize stackSize;
     const char *taskName;
-    // char taskName[SP_TASKNAME_MAX_LEN];
 } sp_TaskConfigInfo;
 
 /* Task runtime information */
