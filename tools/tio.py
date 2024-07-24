@@ -1,6 +1,12 @@
 # python3.10.exe .\tools\tio.py
 
-import serial, sys, glob
+import serial, sys, glob, os
+
+SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+# TODO: add logs writing in file support
+# LOG_FILE_RELATIVE_PATH = "logs\\session.txt"
+# LOG_FILE_PATH = os.path.join(SCRIPT_PATH, LOG_FILE_RELATIVE_PATH)
 
 WORK_PORT = ''
 
@@ -43,16 +49,17 @@ serialPort = serial.Serial(port=WORK_PORT, baudrate=115200, timeout=.1)
 
 serialString = ""
 
-while(1):
+if __name__ == "__main__":
+    while(1):
+        try:
+            if(serialPort.in_waiting > 0):
+                serialString = serialPort.readline()
+                serialStringDecoded = serialString.decode('Ascii')
+                print(serialStringDecoded, end='')
+                writer.write(serialStringDecoded)
+        except KeyboardInterrupt:
+            print("\nCtrl-C, exiting..")
+            sys.exit()
 
-    try:
-        if(serialPort.in_waiting > 0):
-            serialString = serialPort.readline()
-            print(serialString.decode('Ascii'), end='')
-
-    except KeyboardInterrupt:
-        print("\nCtrl-C, exiting..")
-        sys.exit()
-
-    except UnicodeDecodeError:
-        print("\nCodec can't decode byte in position, try one more time...")
+        except UnicodeDecodeError:
+            print("\nCodec can't decode byte in position, try one more time...")
