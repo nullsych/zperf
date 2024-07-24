@@ -9,7 +9,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/tracing/tracing.h>
-#include <SysPerf.h>
 
 #include "common/TasksApi.h"
 #include "common/TasksCfg.h"
@@ -51,8 +50,6 @@ void Led_createTask(void)
    k_thread_name_set(Led_zid, Led_taskName);
 
    LOG_INF("LED Task starting, zid: 0x%x", (unsigned int)Led_zid);
-
-   SysPerf_InitTaskData(Led_taskId, (unsigned int)Led_zid, Led_taskName, LED_TASK_PRIORITY, LED_TASK_STACKSIZE);
 
    k_thread_start(Led_zid);
 }

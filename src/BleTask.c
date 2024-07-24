@@ -11,7 +11,6 @@
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <zephyr/sys/util.h>
-#include <SysPerf.h>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
@@ -162,8 +161,6 @@ void Ble_createTask(void)
     k_thread_name_set(Ble_zid, Ble_taskName);
 
     LOG_INF("BLE Task starting, zid: 0x%x", (unsigned int)Ble_zid);
-
-    SysPerf_InitTaskData(Ble_taskId, (unsigned int)Ble_zid, Ble_taskName, BLE_TASK_PRIORITY, BLE_TASK_STACKSIZE);
 
     k_thread_start(Ble_zid);
 }

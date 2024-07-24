@@ -49,7 +49,5 @@ void SysPerf_createTask(void)
 
     LOG_INF("SysPerf Task starting, zid: 0x%x", (unsigned int)SysPerf_zid);
 
-    SysPerf_InitTaskData(SysPerf_taskId, (unsigned int)SysPerf_zid, SysPerf_taskName, SYSPERF_TASK_PRIORITY, SYSPERF_TASK_STACKSIZE);
-
     k_thread_start(SysPerf_zid);
 }

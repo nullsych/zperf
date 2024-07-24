@@ -23,6 +23,7 @@ void Leds_toggleLeds(uint32_t delay)
          LOG_ERR("Error while toggle pin level!");
 	   }
       k_msleep(delay);
+      // LOG_INF("Toggling on-board LEDs");
    }
 }
 

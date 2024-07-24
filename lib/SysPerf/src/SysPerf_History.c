@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(SysPerfHistory_, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(SysPerfHistory, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
  *                                                SYSPERF HEADERS                                                  *

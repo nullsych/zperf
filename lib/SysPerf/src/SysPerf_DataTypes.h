@@ -19,15 +19,6 @@ typedef SP_PRIO                       sp_TaskPrio;
 typedef SP_STACKSIZE                  sp_TaskStackSize;
 typedef SP_TASK_ID                    sp_TaskId;
 
-/* SysPerf Task indexes */
-typedef enum
-{
-    TaskLED0    = 0x00,
-    TaskBLE     = 0x01,
-    TaskSysPerf = 0x02,
-    SP_TASK_NUM = SP_TASK_COUNT
-} sp_TaskIterator;
-
 /* Os Events */
 typedef enum
 {
@@ -71,10 +62,10 @@ typedef struct SP_PACKED
 /* Configuration information of a task, filed be before scheduler start */
 typedef struct SP_PACKED
 {
-    sp_TaskId taskId;
-    sp_TaskPrio priority;
     sp_TaskStackSize stackSize;
-    const char *taskName;
+    sp_TaskPrio priority;
+    uint8 taskIterator;
+    char *taskName;
 } sp_TaskConfigInfo;
 
 /* Task runtime information */

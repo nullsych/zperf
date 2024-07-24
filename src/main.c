@@ -28,7 +28,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 int main(void)
 {
-	// LOG_HEXDUMP_INF("Firmware hash version: %X", firmware_hash); // TODO: implement onboard firmware SHA calculation
 	LOG_INF("Perform pre-scheduler initializations for SysPerf");
 	SysPerf_PreSchedulerInit();
 
@@ -36,6 +35,9 @@ int main(void)
 	Led_createTask();
 	Ble_createTask();
 	SysPerf_createTask();
+
+	LOG_INF("Perform post-scheduler initializations for SysPerf");
+	SysPerf_PostSchedulerInit();
 }
 
 /* EOF */

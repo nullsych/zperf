@@ -17,6 +17,11 @@
 #include <zephyr/logging/log.h>
 
 /*******************************************************************************************************************
+ *                                             SYSPERF HEADERS                                                      *
+ *******************************************************************************************************************/
+#include "SysPerf_Cfg.cfg"
+
+/*******************************************************************************************************************
 *                                             RTOS-SPECIFIC LOCKS                                                 *
 *******************************************************************************************************************/
 /** @details: Map specific routines to lock/unlock all ISRs **/
@@ -38,10 +43,31 @@
 *                                           RTOS-SPECIFIC CONTANTS                                                 *
 *******************************************************************************************************************/
 /** @details: Map RTOS-specific constants **/
-#define MAP_RTOS_TASKS_COUNT                (0x03)                      /* Number of tasks, runnings in system    */
-#define MAP_RTOS_ISRS_COUNT                 (0u)                        /* Number of ISRs, runnings in system     */
-#define MAP_RTOS_UPTIME_TOP                 (0xFFFFFFFF)                /* Zephyr timer top value                 */
-#define MAP_RTOS_TASK_MAX_NAME_LEN          CONFIG_THREAD_MAX_NAME_LEN  /* Zephyr tasks max len of name           */
+
+/** @brief Number of user's tasks, runnings in system */
+#define MAP_RTOS_USER_TASKS_COUNT           (3U)
+
+#if (RTOS_HAS_SYSTEM_TASKS == SP_F_ON)
+/** @brief Main, sysworkq, MPSL Work, BT_LW_WQ and logging task */
+#define RTOS_SYS_TASK_COUNT                 (5U)
+#else
+#define RTOS_SYS_TASK_COUNT                 (0U)
+#endif
+
+/** @brief Total number of Idle Tasks in the system */
+#define MAP_RTOS_IDLE_TASK_COUNT            (1U)
+
+/** @brief Total number of Tasks in the system */
+#define MAP_RTOS_OVERALL_TASKS_COUNT        (RTOS_SYS_TASK_COUNT + MAP_RTOS_USER_TASKS_COUNT + MAP_RTOS_IDLE_TASK_COUNT)
+
+/** @brief Total number of ISRs in the system */
+#define MAP_RTOS_ISRS_COUNT                 (0u) // TODO: add support to calculate ISR runtime
+
+/** @brief Zephyr timer top value */
+#define MAP_RTOS_UPTIME_TOP                 (0xFFFFFFFF)
+
+/** @brief Zephyr length for Task's name */
+#define MAP_RTOS_TASK_MAX_NAME_LEN          CONFIG_THREAD_MAX_NAME_LEN
 
 
 /*******************************************************************************************************************
@@ -50,9 +76,9 @@
 /** @details: Map RTOS-speficif standart, Tasks & ISRs types **/
 #define MAP_RTOS_PTR2TASK                   struct k_thread *
 #define MAP_RTOS_PTR2ISR
-#define MAP_RTOS_PRIO                       int
-#define MAP_RTOS_STACKSIZE                  int
-#define MAP_RTOS_UNIQ_ID                    uint64_t
+#define MAP_RTOS_PRIO                       int8_t
+#define MAP_RTOS_STACKSIZE                  uint32_t
+#define MAP_RTOS_UNIQ_ID                    uint32_t
 
 typedef uint64_t                            uint64;
 typedef uint32_t                            uint32;
