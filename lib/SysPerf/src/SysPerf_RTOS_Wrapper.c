@@ -18,14 +18,14 @@
 LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
- *                                                SYSPERF HEADERS                                                  *
- *******************************************************************************************************************/
+*                                                SYSPERF HEADERS                                                   *
+*******************************************************************************************************************/
 #include "SysPerf_RTOS_Map.h"
 #include "SysPerf_SetupData.h"
 
 /*******************************************************************************************************************
-*                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
-*******************************************************************************************************************/
+*                                            WAPPERS API IMPLEMENTATION                                            *
+********************************************************************************************************************/
 
 /**
  * @brief Get unique ID (RTOS specific) of the current task.
@@ -36,19 +36,19 @@ SP_HOOK_CALLED uint32 SysPerf_GetTaskId(void)
     * @note Recomendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect
     */
    return (uint32)k_sched_current_thread_query();
-    // return (unsigned int)k_current_get();
 }
 
 SP_RTOS_CALLED static void SysPerf_LocalCallback(const struct k_thread *thread, void *user_data)
 {
    static uint8 taskIterator = 0U;
+
    SP_TRACE_INFO("thread name  : %s", thread->name);
-   SP_TRACE_INFO("thread zid   : 0x%x", (unsigned int)thread);
+   SP_TRACE_INFO("thread zid   : 0x%x", (uint32)thread);
    SP_TRACE_INFO("thread prio  : %u", (uint8)thread->base.prio);
    SP_TRACE_INFO("thread stack : %u", (uint32)thread->stack_info.size);
-   SP_TRACE_INFO("taskIterator : %u\n", taskIterator);
+   SP_TRACE_INFO("iterator     : %u\n", taskIterator);
 
-   SysPerfSetupData_Init(taskIterator, (unsigned int)thread, thread->name, (uint8)thread->base.prio, (uint32)thread->stack_info.size);
+   SysPerf_StartupData_Init(taskIterator, (uint32)thread, thread->name, (uint8)thread->base.prio, (uint32)thread->stack_info.size);
    taskIterator++;
 }
 
@@ -65,7 +65,7 @@ SP_HOOK_CALLED void SysPerf_SaveTasksCfg(void)
  */
 SP_HOOK_CALLED uint8 SysPerf_GetTaskIterator(uint32 taskId)
 {
-    return SysPerfSetupData_GetTaskIterator(taskId);
+    return SysPerf_StartupData_GetTaskIterator(taskId);
 }
 
 SP_HOOK_CALLED uint64 SysPerf_GetUptimeTimestamp(void)

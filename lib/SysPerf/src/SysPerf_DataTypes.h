@@ -59,7 +59,7 @@ typedef struct SP_PACKED
     uint8 lastOsEvent;
 } sp_HookHistory;
 
-/* Configuration information of a task, filed be before scheduler start */
+/* Start-up configuration info */
 typedef struct SP_PACKED
 {
     sp_TaskStackSize stackSize;
@@ -95,5 +95,12 @@ typedef struct SP_PACKED
     uint32 IdleRuntime;
     uint32 timestamp;
 } sp_UptimeStat_t;
+
+/* Start-up configuration info handler with unique identifier */
+typedef struct SP_PACKED
+{
+   uint32 taskId;
+   sp_TaskConfigInfo data;
+} sp_TaskConfigInfoHandler;
 
 #endif /* SYSPERFDATATYPES_H */

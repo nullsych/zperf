@@ -44,8 +44,7 @@
 *                                                   MACROS                                                         *
 *******************************************************************************************************************/
 #define TASK_IS_VALID(taskIterator)         ((taskIterator < SP_TASK_COUNT) && (taskIterator >= 0))
-#define GET_CPULOAD(timeslice, totalRT)     ((totalRT * 100U) / timeslice)
-#define GET_IDLETIME(timeslice, idleRT)     ((idleRT  * 100U) / timeslice)
+#define GET_CPU_PERCENT(timeslice, totalRT) ((totalRT * 100U) / timeslice)
 
 
 /*******************************************************************************************************************

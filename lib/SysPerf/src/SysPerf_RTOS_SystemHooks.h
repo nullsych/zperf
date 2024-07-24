@@ -13,17 +13,25 @@
  *
  */
 
-#ifndef SYSPERF_RTOS_WRAPPER_H
-#define SYSPERF_RTOS_WRAPPER_H
+#ifndef SYSPERF_RTOS_SYSTEM_HOOKS_H
+#define SYSPERF_RTOS_SYSTEM_HOOKS_H
 
-/* Place RTOS-specific headers */
+/*******************************************************************************************************************
+ *                                             RTOS-SPECIFIC HEADERS                                               *
+ ******************************************************************************************************************/
 #include <zephyr/kernel.h>
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/tracing/tracing.h>
 #include <stdint-gcc.h>
 
+/*******************************************************************************************************************
+ *                                                SYSPERF HEADERS                                                  *
+ ******************************************************************************************************************/
 #include "SysPerf.h"
 
+/*******************************************************************************************************************
+ *                                    PLACE IMPLEMENTATION OF RTOS-SPECIFIC HOOKS                                  *
+ ******************************************************************************************************************/
 void sys_trace_thread_switched_in_user(void)
 {
    SysPerf_PreTaskHook();
@@ -49,4 +57,4 @@ void sys_trace_idle_user(void)
    SysPerf_IdleTaskRunning();
 }
 
-#endif /* SYSPERF_RTOS_WRAPPER_H */
+#endif /* SYSPERF_RTOS_SYSTEM_HOOKS_H */

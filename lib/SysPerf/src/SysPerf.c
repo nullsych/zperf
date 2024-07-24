@@ -15,8 +15,8 @@
 LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
- *                                             SYSPERF HEADERS                                                      *
- *******************************************************************************************************************/
+*                                             SYSPERF HEADERS                                                      *
+*******************************************************************************************************************/
 #include "SysPerf.h"
 #include "SysPerf_History.h"
 #include "SysPerf_DataTypes.h"
@@ -25,8 +25,8 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 #include "SysPerf_Cfg.cfg"
 
 /*******************************************************************************************************************
- *                                    MAIN SYSPERF STATISTIC ENTITIES                                              *
- *******************************************************************************************************************/
+*                                    MAIN SYSPERF STATISTIC ENTITIES                                               *
+*******************************************************************************************************************/
 
 /**
  * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle (SP-cycle).
@@ -58,11 +58,12 @@ SP_LOCAL sp_UptimeStat_t      TraceCycle_UptimeStatistic;
 SP_LOCAL sp_TaskRuntime       TraceCycle_TasksStatistics[SP_TASK_COUNT];
 
 /*******************************************************************************************************************
- *                                             SYSPERF LOCAL API                                                   *
- *******************************************************************************************************************/
+*                                             SYSPERF LOCAL API                                                    *
+*******************************************************************************************************************/
 SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskIterator, uint32 timeStamp);
 SP_LOCAL uint64 SysPerf_GetTimestampDelta(uint64, uint64);
-// SP_LOCAL bool SysPerf_CheckTaskId(uint8 taskIterator, unsigned int *taskId);
+SP_LOCAL uint32 SysPerf_GetSystemRuntime(void);
+SP_LOCAL uint32 SysPerf_GetIdleRuntime(void);
 
 SP_LOCAL void SysPerf_CycleBackup(void);
 
@@ -80,8 +81,8 @@ SP_LOCAL_INLINE void SysPerf_ResetTraceCycleStatistic(uint8 taskIterator);
 SP_LOCAL_INLINE void SysPerf_ResetHooksStatistic(uint8 taskIterator);
 
 /*******************************************************************************************************************
- *                                          USER API IMPLEMENTATION                                                *
- *******************************************************************************************************************/
+*                                          USER API IMPLEMENTATION                                                 *
+*******************************************************************************************************************/
 
 /**
  * @brief Trace Tasks & ISRs runtime statistic per SP-cycle.
@@ -104,15 +105,15 @@ SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 #endif
 
 #if (SP_CFG_TRACE_HISTORY == SP_F_ON)
-   SysPerfHistory_TraceCollected();
+   SysPerf_History_TraceCollected();
 #endif
 
    SysPerf_ResetRuntimeStatistic();
 }
 
 /*******************************************************************************************************************
- *                                       SYSPERF HOOKS IMPLEMENTATION                                              *
- *******************************************************************************************************************/
+*                                       SYSPERF HOOKS IMPLEMENTATION                                               *
+*******************************************************************************************************************/
 
 SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
 {
@@ -127,13 +128,13 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
    {
       timestamp = SysPerf_GetUptimeTimestamp();
       Hook_TasksStatistics[taskIterator].taskTimestamp = timestamp;
-      SysPerfHistory_Update(taskIterator, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
-      // SP_TRACE_INFO("### SysPerf_PreTaskHook: data successfully written for %s thread", SysPerfSetupData_GetTaskName(taskIterator));
+      SysPerf_History_Update(taskIterator, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
+      // SP_TRACE_INFO("### SysPerf_PreTaskHook: data successfully written for %s thread", SysPerf_StartupData_GetTaskName(taskIterator));
    }
    else
    {
       // TODO: add collecting diagnostic data to history
-      SP_TRACE_WARN("### SysPerf_PreTaskHook | failed to write stat | taskIterator - %u | taskId - 0x%x", taskIterator, taskId);
+      // SP_TRACE_WARN("### SysPerf_PreTaskHook | failed to write stat | taskIterator - %u | taskId - 0x%x", taskIterator, taskId);
    }
 }
 
@@ -152,8 +153,8 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
       timestamp = SysPerf_GetUptimeTimestamp();
       taskRuntime = SysPerf_GetTaskRuntime(taskIterator, timestamp);
       SysPerf_UpdateTaskStatistic(taskIterator, timestamp, taskRuntime);
-      SysPerfHistory_Update(taskIterator, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
-      // SP_TRACE_INFO("### SysPerf_PostTaskHook: data successfully written for %s thread", SysPerfSetupData_GetTaskName(taskIterator));
+      SysPerf_History_Update(taskIterator, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
+      // SP_TRACE_INFO("### SysPerf_PostTaskHook: data successfully written for %s thread", SysPerf_StartupData_GetTaskName(taskIterator));
    }
    else
    {
@@ -175,28 +176,41 @@ SP_RTOS_CALLED void SysPerf_PostISRHook(void)
 SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
 {
    static uint32 taskId = 0x00000000;
+   static bool unfilled = true;
+#if (SP_IDLE_COUNT > 1U)
+   static uint8 taskIterator = 0U;
+   static uint32 prevtaskId = 0U;
+#endif
 
-   if (taskId < 1U)
+   if (unfilled)
    {
       taskId = SysPerf_GetTaskId();
-      if (SP_IDLE_COUNT == 1U)
+#if (SP_IDLE_COUNT == 1U)
+      Idle_TaskIds[0] = taskId;
+      unfilled = false;
+#elif (SP_IDLE_COUNT > 1U)
+      if (taskId != prevtaskId)
       {
-         Idle_TaskIds[0] = taskId;
+         Idle_TaskIds[taskIterator] = taskId;
+         taskIterator++;
+         prevtaskId = taskId;
+
+         if (taskIterator == SP_IDLE_COUNT)
+         {
+            unfilled = false;
+         }
       }
-      else
-      {
-         // TODO: rewrite with an array use
-      }
+#endif /* SP_IDLE_COUNT */
    }
 }
 
 /*******************************************************************************************************************
- *                                       USER API IMPLEMENTATION                                                   *
- *******************************************************************************************************************/
+*                                       USER API IMPLEMENTATION                                                    *
+*******************************************************************************************************************/
 
 SP_USER_CALLED void SysPerf_PreSchedulerInit(void)
 {
-   SysPerfHistory_Init();
+   SysPerf_History_Init();
    SysPerf_ResetRuntimeStatistic();
 }
 
@@ -206,53 +220,86 @@ SP_USER_CALLED void SysPerf_PostSchedulerInit(void)
 }
 
 /*******************************************************************************************************************
- *                                         LOCAL API IMPLEMENTATION                                                *
- *******************************************************************************************************************/
+*                                         LOCAL API IMPLEMENTATION                                                 *
+*******************************************************************************************************************/
 
 SP_LOCAL uint64 SysPerf_GetTimestampDelta(uint64 t1, uint64 t2)
 {
    return (uint64)((t2 > t1) ? (t2 - t1) : (t1 - t2));
 }
 
-SP_LOCAL void SysPerf_TraceCpuUsage(void)
+/**
+ * @brief Calculate total runtime across all tasks running in the system (with Idle task(s))
+ */
+SP_LOCAL uint32 SysPerf_GetSystemRuntime(void)
 {
    uint8 taskIterator;
+   uint32 systemTotalRuntime = 0U;
+
+   for (taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
+   {
+      systemTotalRuntime += TraceCycle_TasksStatistics[taskIterator].totalRuntime;
+   }
+
+   return systemTotalRuntime;
+}
+
+/**
+ * @brief Calculate separately Idle task(s) total runtime
+ */
+SP_LOCAL uint32 SysPerf_GetIdleRuntime(void)
+{
+   uint8 taskIterator;
+   uint32 idleTotalRuntime = 0U;
+
+   for (uint8 i = 0; i < SP_IDLE_COUNT; i++)
+   {
+      taskIterator = SysPerf_GetTaskIterator(Idle_TaskIds[i]);
+      idleTotalRuntime += TraceCycle_TasksStatistics[taskIterator].totalRuntime;
+   }
+
+   return idleTotalRuntime;
+}
+
+SP_LOCAL void SysPerf_TraceCpuUsage(void)
+{
    uint32 timeslice;
    uint64 currTimestamp;
-   static uint64 lastTimestamp;
+   static uint64 lastTimestamp = 0U;
 
+   /* System tasks total runtime per timeslice */
+   uint32 systemTotalRuntime;
    /* Percentage with application total runtime per timeslice */
-   uint32 cpuLoad;
+   uint32 cpuLoadPercent;
    /* Percentage with idle total runtime per timeslice */
-   uint32 idleTime;
+   uint32 idleTimePercent;
    /* Percentage for os resource runtime (scheduling etc) */
-   uint32 osTime;
-   /* Application tasks total runtime per timeslice */
-   uint32 appTotalRuntime = 0U;
+   uint32 osTimePercent;
    /* Idle task(s) total runtime per timeslice */
-   uint32 idleTotalRuntime = 0U;
+   uint32 idleTotalRuntime;
    /* Os total runtime per timeslice */
-   uint32 osTotalRuntime = 0U;
+   uint32 osTotalRuntime;
 
+   /* Calculate timeslice */
    currTimestamp = SysPerf_GetUptimeTimestamp();
    timeslice = (uint32)SysPerf_GetTimestampDelta(lastTimestamp, currTimestamp);
    lastTimestamp = currTimestamp;
 
-   for (taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
-   {
-      appTotalRuntime += TraceCycle_TasksStatistics[taskIterator].totalRuntime;
-   }
+   /* Calculate total runtime across all tasks running in the system (with Idle task(s)) */
+   systemTotalRuntime = SysPerf_GetSystemRuntime();
 
-   taskIterator = SysPerf_GetTaskIterator(Idle_TaskIds[0]); // reuse taskIterator to obtain Idle one
-   idleTotalRuntime = TraceCycle_TasksStatistics[taskIterator].totalRuntime;
-   idleTime = GET_IDLETIME(timeslice, idleTotalRuntime);
+   /* Calculate RTOS's resources total runtime */
+   osTotalRuntime = timeslice - systemTotalRuntime;
 
-   cpuLoad = GET_CPULOAD(timeslice, (appTotalRuntime - idleTotalRuntime));
+   /* Calculate separately Idle task(s) total runtime */
+   idleTotalRuntime = SysPerf_GetIdleRuntime();
 
-   osTotalRuntime = timeslice - appTotalRuntime;
-   osTime = GET_CPULOAD(timeslice, osTotalRuntime);
+   /* Calculate percentages */
+   idleTimePercent = GET_CPU_PERCENT(timeslice, idleTotalRuntime);
+   cpuLoadPercent = GET_CPU_PERCENT(timeslice, (systemTotalRuntime - idleTotalRuntime));
+   osTimePercent = GET_CPU_PERCENT(timeslice, osTotalRuntime);
 
-   SP_TRACE_INFO("# ######### CPU LOAD %d%% ### IDLE %d%% ### OS %d%% ######### #\n", cpuLoad, idleTime, osTime);
+   SP_TRACE_INFO("# ################# CPU LOAD %d%% ### IDLE %d%% ### KERNEL %d%% ################## #\n", cpuLoadPercent, idleTimePercent, osTimePercent);
 }
 
 SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskIterator, uint64 timestamp, uint32 taskRuntime)

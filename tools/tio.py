@@ -56,7 +56,6 @@ if __name__ == "__main__":
                 serialString = serialPort.readline()
                 serialStringDecoded = serialString.decode('Ascii')
                 print(serialStringDecoded, end='')
-                writer.write(serialStringDecoded)
         except KeyboardInterrupt:
             print("\nCtrl-C, exiting..")
             sys.exit()
