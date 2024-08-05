@@ -1,6 +1,6 @@
 /**
  * @file   TasksCfg.h
- * @brief  Contain runtime configuration (stack size, priority number, specific identifiers) for user-defined tasks.
+ * @brief  Contain runtime configuration such as stack size, priority number, unique identifiers for user-defined Tasks (Threads).
  * @author kvant6ubl
  * @date   May 6, 2024
  *

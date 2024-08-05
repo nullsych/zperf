@@ -35,7 +35,9 @@
 #define SP_PTR2TASK                         MAP_RTOS_PTR2TASK
 #define SP_PRIO                             MAP_RTOS_PRIO
 #define SP_STACKSIZE                        MAP_RTOS_STACKSIZE
+
 #define SP_TASK_ID                          MAP_RTOS_UNIQ_ID
+#define SP_ISR_ID                           MAP_RTOS_UNIQ_ID
 
 #define SP_HISTORY_SIZE                     (8U)     /* Total number of hook-history entities, static allocated   */
 #define SP_CPU_USAGE_THR                    (50U)    /* Threshold for CPU utilization accross all cores           */

@@ -46,14 +46,9 @@ SP_LOCAL uint32            HistorySize = 0U;
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-SP_HOOK_CALLED uint8 SysPerf_History_GetLastEntityState(uint8 taskIterator)
+SP_HOOK_CALLED uint8 SysPerf_History_GetLastStateMask(void)
 {
-   return HistoryHandler.entities[taskIterator].state;
-}
-
-SP_HOOK_CALLED uint8 SysPerf_History_GetLastState(void)
-{
-   return HistoryHandler.entities[HistoryIndex].state;
+   return HistoryHandler.entities[HistoryIndex].stateMask;
 }
 
 SP_HOOK_CALLED uint32 SysPerf_History_GetLastTimestamp(void)
@@ -63,7 +58,7 @@ SP_HOOK_CALLED uint32 SysPerf_History_GetLastTimestamp(void)
 
 SP_HOOK_CALLED uint8 SysPerf_History_GetLastTask(void)
 {
-   return HistoryHandler.entities[HistoryIndex].taskIterator;
+   return HistoryHandler.entities[HistoryIndex].identifier;
 }
 
 SP_HOOK_CALLED void SysPerf_History_Init(void)
@@ -72,17 +67,22 @@ SP_HOOK_CALLED void SysPerf_History_Init(void)
    HistorySize  = 0U;
 }
 
-SP_HOOK_CALLED void SysPerf_History_Update(uint8 taskIterator, uint64 timestamp, uint8 state, uint8 lastOsEvent)
+SP_HOOK_CALLED void SysPerf_History_Dump(void)
+{
+   // TODO: add crc32 calculation
+   // TODO: dump byte-stream from history in UART
+}
+
+SP_HOOK_CALLED void SysPerf_History_Update(uint32 identifier, uint64 timestamp, uint8 stateMask)
 {
    sp_Hook *currentEntity = &HistoryHandler.entities[HistoryIndex];
 
    if (currentEntity != NULL)
    {
-      currentEntity->state = state;
-      currentEntity->taskIterator = taskIterator;
+      currentEntity->stateMask = stateMask;
+      currentEntity->identifier = identifier;
       currentEntity->timestamp = timestamp;
 
-      HistoryHandler.lastOsEvent = lastOsEvent;
       HistoryIndex++;
       HistoryIndex %= SP_HISTORY_SIZE;
       HistorySize = (HistorySize < SP_HISTORY_SIZE) ? (HistorySize + 1) : SP_HISTORY_SIZE;
@@ -93,12 +93,12 @@ SP_USER_CALLED void SysPerf_History_TraceCollected(void)
 {
    SP_TRACE_INFO("# ############### Collected History ############### #");
    SP_TRACE_INFO("#                                                   #");
-   SP_TRACE_INFO("#    Task Id             State         Timestamp    #");
+   SP_TRACE_INFO("#    Task Id             Mask         Timestamp    #");
 
    for (uint32 idx = 0; idx < HistorySize; idx++)
    {
       SP_TRACE_INFO("%s %8u %17u %18u %5s",
-                    "#", HistoryHandler.entities[idx].taskIterator, HistoryHandler.entities[idx].state,
+                    "#", HistoryHandler.entities[idx].identifier, HistoryHandler.entities[idx].stateMask,
                     HistoryHandler.entities[idx].timestamp, "#");
    }
    SP_TRACE_INFO("# ################################################# #\n");

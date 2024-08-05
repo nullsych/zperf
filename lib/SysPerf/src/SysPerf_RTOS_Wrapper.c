@@ -24,11 +24,11 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 #include "SysPerf_SetupData.h"
 
 /*******************************************************************************************************************
-*                                            WAPPERS API IMPLEMENTATION                                            *
+*                                            WRAPPER API IMPLEMENTATION                                            *
 ********************************************************************************************************************/
 
 /**
- * @brief Get unique ID (RTOS specific) of the current task.
+ * @brief Get unique ID (RTOS specific) of the current Task (Thread).
  */
 SP_HOOK_CALLED uint32 SysPerf_GetTaskId(void)
 {
@@ -38,7 +38,7 @@ SP_HOOK_CALLED uint32 SysPerf_GetTaskId(void)
    return (uint32)k_sched_current_thread_query();
 }
 
-SP_RTOS_CALLED static void SysPerf_LocalCallback(const struct k_thread *thread, void *user_data)
+SP_LOCAL SP_RTOS_CALLED void SysPerf_LocalCallback(const struct k_thread *thread, void *user_data)
 {
    static uint8 taskIterator = 0U;
 
@@ -53,10 +53,13 @@ SP_RTOS_CALLED static void SysPerf_LocalCallback(const struct k_thread *thread, 
 }
 
 /**
- * @brief Saves initialized tasks configuration data after scheduler started it's job.
+ * @brief Saves RTU's (Runtime Unit, Tasks/ISRs) configuration.
  */
-SP_HOOK_CALLED void SysPerf_SaveTasksCfg(void)
+SP_HOOK_CALLED void SysPerf_InitRTUConfiguration(void)
 {
+   /**
+    * @note Assign pointer to the local callback function to save cfg
+    */
    k_thread_foreach(SysPerf_LocalCallback, NULL);
 }
 
@@ -65,7 +68,7 @@ SP_HOOK_CALLED void SysPerf_SaveTasksCfg(void)
  */
 SP_HOOK_CALLED uint8 SysPerf_GetTaskIterator(uint32 taskId)
 {
-    return SysPerf_StartupData_GetTaskIterator(taskId);
+   return SysPerf_StartupData_GetTaskIterator(taskId);
 }
 
 SP_HOOK_CALLED uint64 SysPerf_GetUptimeTimestamp(void)

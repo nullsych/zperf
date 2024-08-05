@@ -9,18 +9,20 @@
 #ifndef SYSPERF_HISTORY_H
 #define SYSPERF_HISTORY_H
 
-#include "SysPerf.h"
+#include "SysPerf_DataTypes.h"
 
 /*******************************************************************************************************************
 *                                            HISTORY GLOBAL API                                                    *
 ********************************************************************************************************************/
 
 SP_HOOK_CALLED void     SysPerf_History_Init(void);
-SP_HOOK_CALLED void     SysPerf_History_Update(uint8 taskIterator, uint64 timestamp, uint8 state, uint8 lastOsEvent);
-SP_HOOK_CALLED uint8    SysPerf_History_GetLastEntityState(uint8 taskIterator);
-SP_HOOK_CALLED uint8    SysPerf_History_GetLastState(void);
+SP_HOOK_CALLED void     SysPerf_History_Update(uint32, uint64, uint8);
+SP_HOOK_CALLED void     SysPerf_History_Dump(void);
+
+SP_HOOK_CALLED uint8    SysPerf_History_GetLastStateMask(void);
 SP_HOOK_CALLED uint8    SysPerf_History_GetLastTask(void);
 SP_HOOK_CALLED uint32   SysPerf_History_GetLastTimestamp(void);
+
 SP_USER_CALLED void     SysPerf_History_TraceCollected(void);
 
 #endif /* SYSPERF_HISTORY_H */

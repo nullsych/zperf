@@ -26,7 +26,7 @@ LOG_MODULE_REGISTER(SysPerf_StartupData, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 
 /**
- * @brief Store configuration/setup information of all tasks, used as reference.
+ * @brief Store configuration/setup information of all Tasks (Threads), used as reference.
  */
 SP_LOCAL sp_TaskConfigInfoHandler      Tasks_StartupData[SP_TASK_COUNT] = {NULL};
 

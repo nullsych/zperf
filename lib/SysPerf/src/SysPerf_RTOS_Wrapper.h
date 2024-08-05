@@ -19,7 +19,7 @@
 *******************************************************************************************************************/
 
 extern SP_HOOK_CALLED uint32           SysPerf_GetTaskId(void);
-extern SP_HOOK_CALLED void             SysPerf_SaveTasksCfg(void);
+extern SP_HOOK_CALLED void             SysPerf_InitRTUConfiguration(void);
 extern SP_HOOK_CALLED uint8            SysPerf_GetTaskIterator(uint32);
 extern SP_HOOK_CALLED uint64           SysPerf_GetUptimeTimestamp(void);
 

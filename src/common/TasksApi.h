@@ -1,6 +1,6 @@
 /**
  * @file   TasksApi.h
- * @brief  Contain creating/deleting user-defined tasks API.
+ * @brief  Contain creating/deleting user-defined Tasks (Threads) API.
  * @author kvant6ubl
  * @date   May 6, 2024
  *

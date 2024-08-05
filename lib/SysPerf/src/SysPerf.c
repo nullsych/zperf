@@ -32,30 +32,42 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
  * @brief Intermediate storage for uptime statistic, reseted within 1 trace cycle (SP-cycle).
  * @details All collected data later copied to TraceCycle_UptimeStatistic.
  */
-SP_LOCAL sp_UptimeStat_t      Hook_UptimeStatistic;
+SP_LOCAL sp_UptimeStatistic_t       Hook_UptimeStatistic;
 
 /**
- * @brief Intermediate storage for tasks runtime statistic, reseted within 1 trace cycle (SP-cycle).
+ * @brief Intermediate storage for Tasks (Threads) runtime statistic, reseted within 1 trace cycle (SP-cycle).
  * @details All collected data later copied to TraceCycle_TasksStatistics.
  */
-SP_LOCAL sp_TaskRuntime       Hook_TasksStatistics[SP_TASK_COUNT];
+SP_LOCAL sp_TaskRuntime             Hook_TasksStatistics[SP_TASK_COUNT];
+
+#if (SP_CFG_ISR_RUNTIME_SUPPORTED == SP_CFG_ON)
+   #if (SP_CFG_ISR_RUNTIME_DISTINGUISH == SP_CFG_ON)
+      /**
+       * @brief Intermediate storage for ISRs runtime statistic, reseted within 1 trace cycle (SP-cycle).
+       * @details All collected data later copied to TraceCycle_IrqsStatistics.
+       */
+      SP_LOCAL sp_IsrRuntime        Hook_IrqsStatistics[SP_ISR_COUNT];
+   #elif (SP_CFG_ISR_TOTAL_RUNTIME_ONLY == SP_CFG_ON)
+      SP_LOCAL sp_IsrRuntime        Hook_IsrTotalStatistic;
+   #endif /* SP_CFG_ISR_RUNTIME_DISTINGUISH */
+#endif /* SP_CFG_ISR_RUNTIME_SUPPORTED */
 
 /**
- * @brief Idle Tasks uniue identifiers.
+ * @brief Idle Tasks (Threads) uniue identifiers.
  */
-SP_LOCAL uint32               Idle_TaskIds[SP_IDLE_COUNT];
+SP_LOCAL uint32                     Idle_TaskIds[SP_IDLE_COUNT];
 
 /**
  * @brief Store a copy of uptime statistic when SysPerf_CycleBackup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SP_LOCAL sp_UptimeStat_t      TraceCycle_UptimeStatistic;
+SP_LOCAL sp_UptimeStatistic_t       TraceCycle_UptimeStatistic;
 
 /**
- * @brief Store a copy of tasks runtime statistic when SysPerf_CycleBackup() routine occurs.
+ * @brief Store a copy of Tasks (Threads) runtime statistic when SysPerf_CycleBackup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SP_LOCAL sp_TaskRuntime       TraceCycle_TasksStatistics[SP_TASK_COUNT];
+SP_LOCAL sp_TaskRuntime             TraceCycle_TasksStatistics[SP_TASK_COUNT];
 
 /*******************************************************************************************************************
 *                                             SYSPERF LOCAL API                                                    *
@@ -75,6 +87,7 @@ SP_LOCAL void SysPerf_TraceCycleStatistic(void);
 SP_LOCAL void SysPerf_TraceUptimeStatistic(void);
 SP_LOCAL void SysPerf_TraceCpuUsage(void);
 
+SP_LOCAL_INLINE void SysPerf_UpdateISRsStatistic(uint8 isrIterator, uint64 timestamp, uint32 isrRuntime);
 SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskIterator, uint64 timestamp, uint32 taskRuntime);
 SP_LOCAL_INLINE void SysPerf_UpdateUptimeStatistic(uint8 taskIterator, uint32 taskRuntime, sp_TaskRuntime *task);
 SP_LOCAL_INLINE void SysPerf_ResetTraceCycleStatistic(uint8 taskIterator);
@@ -85,26 +98,26 @@ SP_LOCAL_INLINE void SysPerf_ResetHooksStatistic(uint8 taskIterator);
 *******************************************************************************************************************/
 
 /**
- * @brief Trace Tasks & ISRs runtime statistic per SP-cycle.
+ * @brief Trace Tasks (Threads) & ISRs runtime statistic per SP-cycle.
  * //TODO: rewr later: This function needs to be called each 1 second.
  */
 SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 {
    SysPerf_CycleBackup();
 
-#if (SP_CFG_TRACE_MAIN_STAT == SP_F_ON)
+#if (SP_CFG_TRACE_MAIN_STAT == SP_CFG_ON)
    SysPerf_TraceCycleStatistic();
 #endif
 
-#if (SP_CFG_TRACE_UPTIME == SP_F_ON)
+#if (SP_CFG_TRACE_UPTIME == SP_CFG_ON)
    SysPerf_TraceUptimeStatistic();
 #endif
 
-#if (SP_CFG_TRACE_CPU_LOAD == SP_F_ON)
+#if (SP_CFG_TRACE_CPU_LOAD == SP_CFG_ON)
    SysPerf_TraceCpuUsage();
 #endif
 
-#if (SP_CFG_TRACE_HISTORY == SP_F_ON)
+#if (SP_CFG_TRACE_HISTORY == SP_CFG_ON)
    SysPerf_History_TraceCollected();
 #endif
 
@@ -117,66 +130,93 @@ SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 
 SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
 {
+   uint8  stateMask = 0U;
    uint8  taskIterator;
    uint32 taskId;
-   uint64 timestamp;
+   uint64 timestamp = 0U;
 
    taskId = SysPerf_GetTaskId();
    taskIterator = SysPerf_GetTaskIterator(taskId);
+   stateMask |= TASK_STATE_ENTER;
 
    if (TASK_IS_VALID(taskIterator))
    {
       timestamp = SysPerf_GetUptimeTimestamp();
       Hook_TasksStatistics[taskIterator].taskTimestamp = timestamp;
-      SysPerf_History_Update(taskIterator, timestamp, TASK_STATE_ENTER, PRE_TASK_HOOK_EV);
+      stateMask |= TASK_STATE_HOOK_SUCCESS;
       // SP_TRACE_INFO("### SysPerf_PreTaskHook: data successfully written for %s thread", SysPerf_StartupData_GetTaskName(taskIterator));
    }
    else
    {
+      stateMask |= TASK_STATE_INVALID_ID;
       // TODO: add collecting diagnostic data to history
       // SP_TRACE_WARN("### SysPerf_PreTaskHook | failed to write stat | taskIterator - %u | taskId - 0x%x", taskIterator, taskId);
    }
+   SysPerf_History_Update(taskId, timestamp, stateMask);
 }
 
 SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
 {
+   uint8  stateMask = 0U;
    uint8  taskIterator;
    uint32 taskId;
    uint32 taskRuntime;
-   uint64 timestamp;
+   uint64 timestamp = 0U;
 
    taskId = SysPerf_GetTaskId();
    taskIterator = SysPerf_GetTaskIterator(taskId);
+   stateMask |= TASK_STATE_EXIT;
 
    if (TASK_IS_VALID(taskIterator))
    {
       timestamp = SysPerf_GetUptimeTimestamp();
       taskRuntime = SysPerf_GetTaskRuntime(taskIterator, timestamp);
       SysPerf_UpdateTaskStatistic(taskIterator, timestamp, taskRuntime);
-      SysPerf_History_Update(taskIterator, timestamp, TASK_STATE_EXIT, POST_TASK_HOOK_EV);
-      // SP_TRACE_INFO("### SysPerf_PostTaskHook: data successfully written for %s thread", SysPerf_StartupData_GetTaskName(taskIterator));
+      stateMask |= TASK_STATE_HOOK_SUCCESS;
    }
    else
    {
+      stateMask |= TASK_STATE_INVALID_ID;
       // TODO: add collecting diagnostic data to history
       // SP_TRACE_WARN("### SysPerf_PostTaskHook | failed to write stat, taskIterator: %u, taskId 0x%x", taskIterator, taskId);
    }
+   SysPerf_History_Update(taskId, timestamp, stateMask);
 }
 
 SP_RTOS_CALLED void SysPerf_PreISRHook(void)
 {
-   // TODO: add support to measure ISR runtime
+   uint64 timestamp;
+   timestamp = SysPerf_GetUptimeTimestamp();
+   Hook_IsrTotalStatistic.isrTimestamp = timestamp;
+
+#if (SP_CFG_ISR_RUNTIME_DISTINGUISH == SP_CFG_OFF)
+   SysPerf_History_Update(SP_ISR_ID_SIGN, timestamp, ISR_STATE_ENTER);
+#endif /* SP_CFG_ISR_RUNTIME_DISTINGUISH */
 }
 
 SP_RTOS_CALLED void SysPerf_PostISRHook(void)
 {
-   // TODO: add support to measure ISR runtime
+   uint32 isrRuntime;
+   uint64 timestamp;
+
+   timestamp = SysPerf_GetUptimeTimestamp();
+   isrRuntime = (uint32)SysPerf_GetTimestampDelta(timestamp, Hook_IsrTotalStatistic.isrTimestamp);
+   SysPerf_UpdateISRsStatistic(0U, timestamp, isrRuntime);
+
+#if (SP_CFG_ISR_RUNTIME_DISTINGUISH == SP_CFG_OFF)
+   SysPerf_History_Update(SP_ISR_ID_SIGN, timestamp, ISR_STATE_EXIT);
+#endif /* SP_CFG_ISR_RUNTIME_DISTINGUISH */
 }
 
 SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
 {
+   uint64 timestamp;
+   uint8  stateMask = 0U;
    static uint32 taskId = 0x00000000;
    static bool unfilled = true;
+
+   timestamp = SysPerf_GetUptimeTimestamp();
+
 #if (SP_IDLE_COUNT > 1U)
    static uint8 taskIterator = 0U;
    static uint32 prevtaskId = 0U;
@@ -202,6 +242,9 @@ SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
       }
 #endif /* SP_IDLE_COUNT */
    }
+
+   stateMask |= IDLE_STATE_RUNNING;
+   SysPerf_History_Update(SysPerf_GetTaskId(), timestamp, stateMask);
 }
 
 /*******************************************************************************************************************
@@ -216,7 +259,7 @@ SP_USER_CALLED void SysPerf_PreSchedulerInit(void)
 
 SP_USER_CALLED void SysPerf_PostSchedulerInit(void)
 {
-   SysPerf_SaveTasksCfg();
+   SysPerf_InitRTUConfiguration();
 }
 
 /*******************************************************************************************************************
@@ -229,7 +272,7 @@ SP_LOCAL uint64 SysPerf_GetTimestampDelta(uint64 t1, uint64 t2)
 }
 
 /**
- * @brief Calculate total runtime across all tasks running in the system (with Idle task(s))
+ * @brief Calculate total runtime across all Tasks (Threads) running in the system (with Idle task(s))
  */
 SP_LOCAL uint32 SysPerf_GetSystemRuntime(void)
 {
@@ -267,7 +310,7 @@ SP_LOCAL void SysPerf_TraceCpuUsage(void)
    uint64 currTimestamp;
    static uint64 lastTimestamp = 0U;
 
-   /* System tasks total runtime per timeslice */
+   /* System Tasks (Threads) total runtime per timeslice */
    uint32 systemTotalRuntime;
    /* Percentage with application total runtime per timeslice */
    uint32 cpuLoadPercent;
@@ -285,7 +328,7 @@ SP_LOCAL void SysPerf_TraceCpuUsage(void)
    timeslice = (uint32)SysPerf_GetTimestampDelta(lastTimestamp, currTimestamp);
    lastTimestamp = currTimestamp;
 
-   /* Calculate total runtime across all tasks running in the system (with Idle task(s)) */
+   /* Calculate total runtime across all Tasks (Threads) running in the system (with Idle task(s)) */
    systemTotalRuntime = SysPerf_GetSystemRuntime();
 
    /* Calculate RTOS's resources total runtime */
@@ -316,6 +359,27 @@ SP_LOCAL_INLINE void SysPerf_UpdateTaskStatistic(uint8 taskIterator, uint64 time
    taskPtr->taskSwitches++;
 
    SysPerf_UpdateUptimeStatistic(taskIterator, taskRuntime, taskPtr);
+}
+
+SP_LOCAL_INLINE void SysPerf_UpdateISRsStatistic(uint8 isrIterator, uint64 timestamp, uint32 isrRuntime)
+{
+#if (SP_CFG_ISR_RUNTIME_DISTINGUISH == SP_CFG_ON)
+   // TODO: implement
+   sp_IsrRuntime *isrPtr = &Hook_TasksStatistics[taskIterator];
+#elif (SP_CFG_ISR_TOTAL_RUNTIME_ONLY == SP_CFG_ON)
+   sp_IsrRuntime *isrPtr = &Hook_IsrTotalStatistic;
+#endif
+
+   if (isrRuntime > isrPtr->maxRuntime)
+   {
+      isrPtr->maxRuntime = isrRuntime;
+   }
+
+   isrPtr->isrTimestamp = timestamp;
+   isrPtr->totalRuntime += isrRuntime;
+   isrPtr->isrSwitches++;
+
+   // SysPerf_UpdateUptimeStatistic(taskIterator, taskRuntime, taskPtr);
 }
 
 SP_LOCAL_INLINE void SysPerf_UpdateUptimeStatistic(uint8 taskIterator, uint32 taskRuntime, sp_TaskRuntime *taskPtr)
@@ -407,10 +471,3 @@ SP_LOCAL uint32 SysPerf_GetTaskRuntime(uint8 taskIterator, uint32 timeStamp)
    return taskRuntime;
 }
 
-// SP_LOCAL bool SysPerf_CheckTaskId(uint8 taskIterator, unsigned int *taskId)
-// {
-//    *taskId = SysPerf_GetTaskId();
-//    // SP_TRACE_INFO("SysPerf_CheckTaskId | sdataTaskId : 0x%x", sdataTaskId);
-//    // SP_TRACE_INFO("SysPerf_CheckTaskId | taskId      : 0x%x", taskId);
-//    return (sdataTaskId == (*taskId));
-// }
