@@ -22,6 +22,7 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 #include "SysPerf_RTOS_Map.h"
 #include "SysPerf_SetupData.h"
+#include "SysPerf_Keywords.h"
 
 /*******************************************************************************************************************
 *                                            WRAPPER API IMPLEMENTATION                                            *
@@ -30,15 +31,15 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 /**
  * @brief Get unique ID (RTOS specific) of the current Task (Thread).
  */
-SP_HOOK_CALLED uint32 SysPerf_GetTaskId(void)
+HOOK_CALLED uint32 SysPerf_GetTaskId(void)
 {
    /**
-    * @note Recomendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect
+    * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect
     */
    return (uint32)k_sched_current_thread_query();
 }
 
-SP_LOCAL SP_RTOS_CALLED void SysPerf_LocalCallback(const struct k_thread *thread, void *user_data)
+SP_LOCAL RTOS_CALLED void SysPerf_LocalCallback(const struct k_thread *thread, void *user_data)
 {
    static uint8 taskIterator = 0U;
 
@@ -55,7 +56,7 @@ SP_LOCAL SP_RTOS_CALLED void SysPerf_LocalCallback(const struct k_thread *thread
 /**
  * @brief Saves RTU's (Runtime Unit, Tasks/ISRs) configuration.
  */
-SP_HOOK_CALLED void SysPerf_InitRTUConfiguration(void)
+HOOK_CALLED void SysPerf_InitRTUConfiguration(void)
 {
    /**
     * @note Assign pointer to the local callback function to save cfg
@@ -66,12 +67,12 @@ SP_HOOK_CALLED void SysPerf_InitRTUConfiguration(void)
 /**
  * @brief Get task index (SysPerf specific) based on taskId.
  */
-SP_HOOK_CALLED uint8 SysPerf_GetTaskIterator(uint32 taskId)
+HOOK_CALLED uint8 SysPerf_GetTaskIterator(uint32 taskId)
 {
    return SysPerf_StartupData_GetTaskIterator(taskId);
 }
 
-SP_HOOK_CALLED uint64 SysPerf_GetUptimeTimestamp(void)
+HOOK_CALLED uint64 SysPerf_GetUptimeTimestamp(void)
 {
    uint64 timeStamp;
    timeStamp = k_uptime_ticks();

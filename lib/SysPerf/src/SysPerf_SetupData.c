@@ -18,7 +18,7 @@ LOG_MODULE_REGISTER(SysPerf_StartupData, LOG_LEVEL_DBG);
 *                                                SYSPERF HEADERS                                                   *
 *******************************************************************************************************************/
 #include "SysPerf.h"
-#include "SysPerf_DataTypes.h"
+#include "SysPerf_Keywords.h"
 #include "SysPerf_SetupData.h"
 
 /*******************************************************************************************************************
@@ -59,7 +59,7 @@ SP_LOCAL sp_TaskConfigInfo* SysPerf_StartupData_FindDataByKey(uint32 key)
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-SP_HOOK_CALLED void SysPerf_StartupData_Init(uint8 taskIterator, uint32 taskId, const char *taskName, sint8 taskPrio, uint32 taskStackSize)
+HOOK_CALLED void SysPerf_StartupData_Init(uint8 taskIterator, uint32 taskId, const char *taskName, sint8 taskPrio, uint32 taskStackSize)
 {
    if (TASK_IS_VALID(taskIterator))
    {
@@ -72,25 +72,25 @@ SP_HOOK_CALLED void SysPerf_StartupData_Init(uint8 taskIterator, uint32 taskId, 
    }
 }
 
-SP_HOOK_CALLED const char * SysPerf_StartupData_GetTaskName(uint32 taskId)
+HOOK_CALLED const char * SysPerf_StartupData_GetTaskName(uint32 taskId)
 {
    sp_TaskConfigInfo *data = SysPerf_StartupData_FindDataByKey(taskId);
    return data ? data->taskName : NULL;
 }
 
-SP_HOOK_CALLED sint8 SysPerf_StartupData_GetTaskPrio(uint32 taskId)
+HOOK_CALLED sint8 SysPerf_StartupData_GetTaskPrio(uint32 taskId)
 {
     sp_TaskConfigInfo *data = SysPerf_StartupData_FindDataByKey(taskId);
     return data ? data->priority : -1;
 }
 
-SP_HOOK_CALLED uint32 SysPerf_StartupData_GetTaskStackSize(uint32 taskId)
+HOOK_CALLED uint32 SysPerf_StartupData_GetTaskStackSize(uint32 taskId)
 {
    sp_TaskConfigInfo *data = SysPerf_StartupData_FindDataByKey(taskId);
    return data ? data->stackSize : -1;
 }
 
-SP_HOOK_CALLED uint8 SysPerf_StartupData_GetTaskIterator(uint32 taskId)
+HOOK_CALLED uint8 SysPerf_StartupData_GetTaskIterator(uint32 taskId)
 {
    sp_TaskConfigInfo *data = SysPerf_StartupData_FindDataByKey(taskId);
    return data ? data->taskIterator : -1;

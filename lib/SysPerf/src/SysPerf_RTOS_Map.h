@@ -26,17 +26,17 @@
 *******************************************************************************************************************/
 /** @details: Map specific routines to lock/unlock all ISRs **/
 // #ifdef ...
-#define SP_ISR_LOCK                                 irq_lock
-#define SP_ISR_UNLOCK                               irq_unlock
+#define MAP_RTOS_ISR_LOCK                           irq_lock
+#define MAP_RTOS_ISR_UNLOCK                         irq_unlock
 
 
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC TRACES                                                 *
 *******************************************************************************************************************/
 /** @details: Map specific functions with printf() format to trace SysPerf* statistics **/
-#define SP_TRACE_INFO                               LOG_INF
-#define SP_TRACE_WARN                               LOG_WRN
-#define SP_TRACE_ERRO                               LOG_ERR
+#define MAP_RTOS_TRACE_INFO                         LOG_INF
+#define MAP_RTOS_TRACE_WARN                         LOG_WRN
+#define MAP_RTOS_TRACE_ERRO                         LOG_ERR
 
 
 /*******************************************************************************************************************

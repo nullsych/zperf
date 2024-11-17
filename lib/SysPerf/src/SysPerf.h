@@ -10,21 +10,10 @@
 #define SYSPERF_H
 
 #include "SysPerf_RTOS_Map.h"
+#include "SysPerf_Keywords.h"
 
 /*******************************************************************************************************************
-*                                            SYSPERF KEYWORDS                                                      *
-*******************************************************************************************************************/
-#define SP_LOCAL                            static
-#define SP_LOCAL_INLINE                     static inline
-#define SP_PACKED                           __packed
-#define SP_ALIGNED(x)                       __aligned(x)
-
-#define SP_RTOS_CALLED                      /* API, called within RTOS hooks (Pre, Post, Idle< Shutdown etc.)     */
-#define SP_USER_CALLED                      /* API, called within user application code                           */
-#define SP_HOOK_CALLED                      /* API, called within SysPerf's calculation logic                     */
-
-/*******************************************************************************************************************
-*                                               MAPS & CONSTANTS                                                   *
+*                                               MAPS                                                               *
 *******************************************************************************************************************/
 #define SP_TASK_COUNT                       MAP_RTOS_OVERALL_TASKS_COUNT /* Overall number of Tasks in the system */
 #define SP_IDLE_COUNT                       MAP_RTOS_IDLE_TASK_COUNT     /* Total number of Idle Tasks            */
@@ -39,8 +28,13 @@
 #define SP_TASK_ID                          MAP_RTOS_UNIQ_ID
 #define SP_ISR_ID                           MAP_RTOS_UNIQ_ID
 
-#define SP_HISTORY_SIZE                     (8U)     /* Total number of hook-history entities, static allocated   */
-#define SP_CPU_USAGE_THR                    (50U)    /* Threshold for CPU utilization accross all cores           */
+#define SP_ISR_LOCK                         MAP_RTOS_ISR_LOCK
+#define SP_ISR_UNLOCK                       MAP_RTOS_ISR_UNLOCK
+
+#define SP_TRACE_INFO                       MAP_RTOS_TRACE_INFO
+#define SP_TRACE_WARN                       MAP_RTOS_TRACE_WARN
+#define SP_TRACE_ERRO                       MAP_RTOS_TRACE_ERRO
+
 
 /*******************************************************************************************************************
 *                                                   MACROS                                                         *
@@ -53,15 +47,15 @@
 *                                            SYSPERF GLOBAL API                                                    *
 *******************************************************************************************************************/
 /* SysPerf Hooks Declarations for RTOS-only usage */
-SP_RTOS_CALLED void SysPerf_PreTaskHook(void);
-SP_RTOS_CALLED void SysPerf_PostTaskHook(void);
-SP_RTOS_CALLED void SysPerf_PreISRHook(void);
-SP_RTOS_CALLED void SysPerf_PostISRHook(void);
-SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void);
+RTOS_CALLED void SysPerf_PreTaskHook(void);
+RTOS_CALLED void SysPerf_PostTaskHook(void);
+RTOS_CALLED void SysPerf_PreISRHook(void);
+RTOS_CALLED void SysPerf_PostISRHook(void);
+RTOS_CALLED void SysPerf_IdleTaskRunning(void);
 
 /* SysPerf API for user's code */
-SP_USER_CALLED extern void SysPerf_RuntimeOverallStatistic(void);
-SP_USER_CALLED extern void SysPerf_PreSchedulerInit(void);
-SP_USER_CALLED extern void SysPerf_PostSchedulerInit(void);
+USER_CALLED extern void SysPerf_RuntimeOverallStatistic(void);
+USER_CALLED extern void SysPerf_PreSchedulerInit(void);
+USER_CALLED extern void SysPerf_PostSchedulerInit(void);
 
 #endif /* SYSPERF_H */

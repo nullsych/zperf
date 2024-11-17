@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 #include "SysPerf.h"
 #include "SysPerf_History.h"
+#include "SysPerf_Keywords.h"
 #include "SysPerf_DataTypes.h"
 #include "SysPerf_RTOS_Wrapper.h"
 #include "SysPerf_SetupData.h"
@@ -101,7 +102,7 @@ SP_LOCAL_INLINE void SysPerf_ResetHooksStatistic(uint8 taskIterator);
  * @brief Trace Tasks (Threads) & ISRs runtime statistic per SP-cycle.
  * //TODO: rewr later: This function needs to be called each 1 second.
  */
-SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
+USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 {
    SysPerf_CycleBackup();
 
@@ -128,7 +129,7 @@ SP_USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 *                                       SYSPERF HOOKS IMPLEMENTATION                                               *
 *******************************************************************************************************************/
 
-SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
+RTOS_CALLED void SysPerf_PreTaskHook(void)
 {
    uint8  stateMask = 0U;
    uint8  taskIterator;
@@ -155,7 +156,7 @@ SP_RTOS_CALLED void SysPerf_PreTaskHook(void)
    SysPerf_History_Update(taskId, timestamp, stateMask);
 }
 
-SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
+RTOS_CALLED void SysPerf_PostTaskHook(void)
 {
    uint8  stateMask = 0U;
    uint8  taskIterator;
@@ -183,7 +184,7 @@ SP_RTOS_CALLED void SysPerf_PostTaskHook(void)
    SysPerf_History_Update(taskId, timestamp, stateMask);
 }
 
-SP_RTOS_CALLED void SysPerf_PreISRHook(void)
+RTOS_CALLED void SysPerf_PreISRHook(void)
 {
    uint64 timestamp;
    timestamp = SysPerf_GetUptimeTimestamp();
@@ -194,7 +195,7 @@ SP_RTOS_CALLED void SysPerf_PreISRHook(void)
 #endif /* SP_CFG_ISR_RUNTIME_DISTINGUISH */
 }
 
-SP_RTOS_CALLED void SysPerf_PostISRHook(void)
+RTOS_CALLED void SysPerf_PostISRHook(void)
 {
    uint32 isrRuntime;
    uint64 timestamp;
@@ -208,7 +209,7 @@ SP_RTOS_CALLED void SysPerf_PostISRHook(void)
 #endif /* SP_CFG_ISR_RUNTIME_DISTINGUISH */
 }
 
-SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
+RTOS_CALLED void SysPerf_IdleTaskRunning(void)
 {
    uint64 timestamp;
    uint8  stateMask = 0U;
@@ -251,13 +252,13 @@ SP_RTOS_CALLED void SysPerf_IdleTaskRunning(void)
 *                                       USER API IMPLEMENTATION                                                    *
 *******************************************************************************************************************/
 
-SP_USER_CALLED void SysPerf_PreSchedulerInit(void)
+USER_CALLED void SysPerf_PreSchedulerInit(void)
 {
    SysPerf_History_Init();
    SysPerf_ResetRuntimeStatistic();
 }
 
-SP_USER_CALLED void SysPerf_PostSchedulerInit(void)
+USER_CALLED void SysPerf_PostSchedulerInit(void)
 {
    SysPerf_InitRTUConfiguration();
 }

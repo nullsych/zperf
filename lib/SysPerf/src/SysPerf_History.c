@@ -18,7 +18,6 @@ LOG_MODULE_REGISTER(SysPerf_History, LOG_LEVEL_DBG);
  *                                                SYSPERF HEADERS                                                  *
  ******************************************************************************************************************/
 #include "SysPerf.h"
-#include "SysPerf_DataTypes.h"
 #include "SysPerf_History.h"
 
 /*******************************************************************************************************************
@@ -46,34 +45,34 @@ SP_LOCAL uint32            HistorySize = 0U;
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-SP_HOOK_CALLED uint8 SysPerf_History_GetLastStateMask(void)
+HOOK_CALLED uint8 SysPerf_History_GetLastStateMask(void)
 {
    return HistoryHandler.entities[HistoryIndex].stateMask;
 }
 
-SP_HOOK_CALLED uint32 SysPerf_History_GetLastTimestamp(void)
+HOOK_CALLED uint32 SysPerf_History_GetLastTimestamp(void)
 {
    return HistoryHandler.entities[HistoryIndex].timestamp;
 }
 
-SP_HOOK_CALLED uint8 SysPerf_History_GetLastTask(void)
+HOOK_CALLED uint8 SysPerf_History_GetLastTask(void)
 {
    return HistoryHandler.entities[HistoryIndex].identifier;
 }
 
-SP_HOOK_CALLED void SysPerf_History_Init(void)
+HOOK_CALLED void SysPerf_History_Init(void)
 {
    HistoryIndex = 0U;
    HistorySize  = 0U;
 }
 
-SP_HOOK_CALLED void SysPerf_History_Dump(void)
+HOOK_CALLED void SysPerf_History_Dump(void)
 {
    // TODO: add crc32 calculation
    // TODO: dump byte-stream from history in UART
 }
 
-SP_HOOK_CALLED void SysPerf_History_Update(uint32 identifier, uint64 timestamp, uint8 stateMask)
+HOOK_CALLED void SysPerf_History_Update(uint32 identifier, uint64 timestamp, uint8 stateMask)
 {
    sp_Hook *currentEntity = &HistoryHandler.entities[HistoryIndex];
 
@@ -89,7 +88,7 @@ SP_HOOK_CALLED void SysPerf_History_Update(uint32 identifier, uint64 timestamp, 
    }
 }
 
-SP_USER_CALLED void SysPerf_History_TraceCollected(void)
+USER_CALLED void SysPerf_History_TraceCollected(void)
 {
    SP_TRACE_INFO("# ############### Collected History ############### #");
    SP_TRACE_INFO("#                                                   #");

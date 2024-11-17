@@ -6,10 +6,11 @@
  *
  */
 
-#ifndef SYSPERFDATATYPES_H
-#define SYSPERFDATATYPES_H
+#ifndef SYS_PERF_DATATYPES_H
+#define SYS_PERF_DATATYPES_H
 
 #include "SysPerf.h"
+#include "SysPerf_Keywords.h"
 
 typedef SP_PTR2TASK                   sp_TaskPtr;
 typedef SP_PRIO                       sp_TaskPrio;
@@ -76,13 +77,6 @@ typedef struct SP_PACKED
     uint8  stateMask;
 } sp_Hook;
 
-/* History statistic */
-typedef struct SP_PACKED
-{
-    sp_Hook entities[SP_HISTORY_SIZE];
-    uint32  crc32;
-} sp_HookHistory;
-
 /* Start-up configuration info */
 typedef struct SP_PACKED
 {
@@ -128,4 +122,4 @@ typedef struct SP_PACKED
    sp_TaskConfigInfo data;
 } sp_TaskConfigInfoHandler;
 
-#endif /* SYSPERFDATATYPES_H */
+#endif /* SYS_PERF_DATATYPES_H */

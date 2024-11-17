@@ -20,7 +20,7 @@
 /* SysPerf's global API */
 #include <SysPerf.h>
 
-/* Rest of Zephyr's unsused hooks */
+/* Rest of Zephyr hooks */
 #include "RTOSHooks.h"
 
 #include <zephyr/logging/log.h>
