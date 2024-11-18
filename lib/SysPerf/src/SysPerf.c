@@ -424,7 +424,7 @@ SP_LOCAL void SysPerf_TraceCycleStatistic(void)
    timeslice = SysPerf_GetTimestampDelta(lastTimestamp, currTimestamp);
    lastTimestamp = currTimestamp;
 
-   SP_TRACE_INFO("# #####################   1 Second System Perfomance   ####################### #");
+   SP_TRACE_INFO("# #####################   1 Second System Performance   ###################### #");
    SP_TRACE_INFO("#                                                                              #");
    SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
 

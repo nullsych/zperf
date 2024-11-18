@@ -1,24 +1,42 @@
 cmake_minimum_required(VERSION 3.20.0)
+
+# Include main Zephyr SDK
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
-project(NrfSysPerf)
+project(NrfSysPerfDemo)
 
-FILE(GLOB main_sources ./src/*.c)
-FILE(GLOB common_sources_leds ./src/common/Leds/*.c)
-FILE(GLOB sysperf_sources ./lib/SysPerf/src/*.c)
+FILE(GLOB MAIN_SOURCES ./src/*.c)
+FILE(GLOB CMN_SOURCES ./src/common/Leds/*.c)
 
-# Include project's header files
-include_directories(
-    ./src/
-    ./src/common/
-    ./src/common/Leds/
-    ./lib/SysPerf/src
+# Add SysPerf library
+add_subdirectory(lib/SysPerf)
+
+# Include directories for SysPerf
+target_include_directories(app PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/common/Leds
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/include
 )
 
+# Add application sources
 target_sources(
     app
     PRIVATE
-    ${main_sources}
-    ${common_sources_leds}
-    ${sysperf_sources}
+    ${MAIN_SOURCES}
+    ${CMN_SOURCES}
+)
+
+# Add SysPerf build directory to link directories
+target_link_directories(
+    app
+    PRIVATE
+    ${CMAKE_BINARY_DIR}/lib/SysPerf
+)
+
+# Link SysPerf library
+target_link_libraries(
+    app
+    PRIVATE
+    SysPerf
 )
