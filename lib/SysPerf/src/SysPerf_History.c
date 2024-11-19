@@ -29,33 +29,33 @@ LOG_MODULE_REGISTER(SysPerf_History, LOG_LEVEL_DBG);
  * @details Store a system 'footprint' for last microseconds.
  * Could be used for runtime analysis in cases of thread starvation or sporadically resets.
  */
-SP_LOCAL sp_HookHistory    HistoryHandler;
+SPK_LOCAL sp_HookHistory      HistoryHandler;
 
 /**
  * @brief Index for HistoryHandler's circular buffer.
  */
-SP_LOCAL uint32            HistoryIndex  = 0U;
+SPK_LOCAL uint32_t            HistoryIndex  = 0U;
 
 /**
  * @brief Size for HistoryHandler's circular buffer.
  */
-SP_LOCAL uint32            HistorySize = 0U;
+SPK_LOCAL uint32_t            HistorySize = 0U;
 
 /*******************************************************************************************************************
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-HOOK_CALLED uint8 SysPerf_History_GetLastStateMask(void)
+HOOK_CALLED uint8_t SysPerf_History_GetLastState(void)
 {
-   return HistoryHandler.entities[HistoryIndex].stateMask;
+   return HistoryHandler.entities[HistoryIndex].state;
 }
 
-HOOK_CALLED uint32 SysPerf_History_GetLastTimestamp(void)
+HOOK_CALLED uint32_t SysPerf_History_GetLastTimestamp(void)
 {
    return HistoryHandler.entities[HistoryIndex].timestamp;
 }
 
-HOOK_CALLED uint8 SysPerf_History_GetLastTask(void)
+HOOK_CALLED uint8_t SysPerf_History_GetLastTask(void)
 {
    return HistoryHandler.entities[HistoryIndex].identifier;
 }
@@ -66,19 +66,29 @@ HOOK_CALLED void SysPerf_History_Init(void)
    HistorySize  = 0U;
 }
 
-HOOK_CALLED void SysPerf_History_Dump(void)
+HOOK_CALLED void SysPerf_History_DumpByteStream(void)
 {
    // TODO: add crc32 calculation
    // TODO: dump byte-stream from history in UART
 }
 
-HOOK_CALLED void SysPerf_History_Update(uint32 identifier, uint64 timestamp, uint8 stateMask)
+HOOK_CALLED void SysPerf_History_Clear(void)
+{
+   for (uint32_t idx = 0; idx < HistorySize; idx++)
+   {
+      HistoryHandler.entities[idx].identifier = 0;
+      HistoryHandler.entities[idx].state = 0;
+      HistoryHandler.entities[idx].timestamp = 0;
+   }
+}
+
+HOOK_CALLED void SysPerf_History_Update(uint32_t identifier, uint32_t timestamp, uint8_t state)
 {
    sp_Hook *currentEntity = &HistoryHandler.entities[HistoryIndex];
 
    if (currentEntity != NULL)
    {
-      currentEntity->stateMask = stateMask;
+      currentEntity->state = state;
       currentEntity->identifier = identifier;
       currentEntity->timestamp = timestamp;
 
@@ -94,10 +104,10 @@ USER_CALLED void SysPerf_History_TraceCollected(void)
    SP_TRACE_INFO("#                                                   #");
    SP_TRACE_INFO("#    Task Id             Mask         Timestamp    #");
 
-   for (uint32 idx = 0; idx < HistorySize; idx++)
+   for (uint32_t idx = 0; idx < HistorySize; idx++)
    {
       SP_TRACE_INFO("%s %8u %17u %18u %5s",
-                    "#", HistoryHandler.entities[idx].identifier, HistoryHandler.entities[idx].stateMask,
+                    "#", HistoryHandler.entities[idx].identifier, HistoryHandler.entities[idx].state,
                     HistoryHandler.entities[idx].timestamp, "#");
    }
    SP_TRACE_INFO("# ################################################# #\n");

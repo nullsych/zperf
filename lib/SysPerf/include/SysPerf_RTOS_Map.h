@@ -25,7 +25,6 @@
 *                                             RTOS-SPECIFIC LOCKS                                                  *
 *******************************************************************************************************************/
 /** @details: Map specific routines to lock/unlock all ISRs **/
-// #ifdef ...
 #define MAP_RTOS_ISR_LOCK                           irq_lock
 #define MAP_RTOS_ISR_UNLOCK                         irq_unlock
 
@@ -49,7 +48,7 @@
 
 #if (SP_CFG_RTOS_HAS_SYSTEM_TASKS == SP_CFG_ON)
 /** @brief In Zephyr RTOS, depending on project configuration (prg.conf) there could be
- *         muitiple system threads. In the current project there are 5 system threads:
+ *         mutiple system threads. In the current project there are 5 system threads:
  *         "Main", "sysworkq", "MPSL Work", "BT_LW_WQ" and "logging".
  *
  *         To obtain an actual number of running threads you could use an appropriate trace-functionality, since many RTOSes have so.
@@ -81,7 +80,7 @@
 #endif /* SP_CFG_ISR_RUNTIME_SUPPORTED */
 
 /** @brief Zephyr timer top value. */
-#define MAP_RTOS_UPTIME_TOP                         (0xFFFFFFFF)
+#define MAP_RTOS_UPTIME_TOP                         (UINT32_MAX)
 
 /** @brief Zephyr length for Task's (Thread's) name. */
 #define MAP_RTOS_TASK_MAX_NAME_LEN                  (CONFIG_THREAD_MAX_NAME_LEN)
@@ -90,30 +89,20 @@
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC TYPES                                                  *
 *******************************************************************************************************************/
-/** @details: Map RTOS-speficif standart, Tasks (Threads) & ISRs types **/
-
-typedef uint64_t                                    uint64;
-typedef uint32_t                                    uint32;
-typedef uint16_t                                    uint16;
-typedef uint8_t                                     uint8;
-typedef int64_t                                     sint64;
-typedef int32_t                                     sint32;
-typedef int16_t                                     sint16;
-typedef int8_t                                      sint8;
 
 /** @brief Pointer to user/system running Task (Thread) */
-#define MAP_RTOS_PTR2TASK                           struct k_thread *
+#define MAP_RTOS_PTR2TASK                           const struct k_thread *
 
 /** @brief Pointer to user/system running Interrupt */
 #define MAP_RTOS_PTR2ISR
 
 /** @brief Allocated RTOS's running units priority */
-#define MAP_RTOS_PRIO                               sint8
+#define MAP_RTOS_PRIO                               int8_t
 
 /** @brief Allocated stack space, measured in bytes */
-#define MAP_RTOS_STACKSIZE                          uint32
+#define MAP_RTOS_STACKSIZE                          uint32_t
 
 /** @brief Unique identifier for RTOS's running units e.g. Tasks (Threads), ISRs etc. */
-#define MAP_RTOS_UNIQ_ID                            uint32
+#define MAP_RTOS_UNIQ_ID                            uint32_t
 
 #endif /* SYSPERF_RTOS_MAP_H */

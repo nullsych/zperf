@@ -11,12 +11,16 @@ FILE(GLOB CMN_SOURCES ./src/common/Leds/*.c)
 # Add SysPerf library
 add_subdirectory(lib/SysPerf)
 
-# Include directories for SysPerf
-target_include_directories(app PRIVATE
+# Include project directories
+target_include_directories(
+    app
+    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/common
     ${CMAKE_CURRENT_SOURCE_DIR}/src/common/Leds
+# Include directories for SysPerf
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/cfg
 )
 
 # Add application sources
