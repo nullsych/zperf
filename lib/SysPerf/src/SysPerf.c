@@ -134,6 +134,7 @@ USER_CALLED void SysPerf_RuntimeOverallStatistic(void)
 
 RTOS_CALLED void SysPerf_PreTaskHook(void)
 {
+   // TODO: add CPU check support by CURRENT_CPU: uint8_t id = CURRENT_CPU;
    uint8_t  taskIterator;
    uint32_t taskId;
    uint32_t timestamp = 0U;
@@ -406,6 +407,7 @@ SPK_LOCAL void SysPerf_TraceCycleStatistic(uint32_t *timeslice)
    SP_TRACE_INFO("#                                                                              #");
    SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
 
+   // TODO: add support of formatting names using k_thread_name_get((k_tid_t)thread);
    for (uint8_t taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
    {
       SP_TRACE_INFO("%s %6u %22u %19u %17u %10s",

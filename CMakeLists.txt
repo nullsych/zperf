@@ -7,6 +7,7 @@ project(NrfSysPerfDemo)
 
 FILE(GLOB MAIN_SOURCES ./src/*.c)
 FILE(GLOB CMN_SOURCES ./src/common/Leds/*.c)
+FILE(GLOB PM_SOURCES ./src/PwrMgt/*.c)
 
 # Add SysPerf library
 add_subdirectory(lib/SysPerf)
@@ -18,6 +19,7 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/common
     ${CMAKE_CURRENT_SOURCE_DIR}/src/common/Leds
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/common/PwrMgt
 # Include directories for SysPerf
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/include
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/cfg
@@ -29,6 +31,7 @@ target_sources(
     PRIVATE
     ${MAIN_SOURCES}
     ${CMN_SOURCES}
+    ${PM_SOURCES}
 )
 
 # Add SysPerf build directory to link directories

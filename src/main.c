@@ -23,11 +23,17 @@
 /* Rest of Zephyr hooks */
 #include "RTOSHooks.h"
 
+/* Power Management */
+#include "PwrMgt/PwrMgt.h"
+
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 int main(void)
 {
+	PwrMgt_init();
+	PwrMgt_traceResetReason();
+
 	LOG_INF("Perform pre-scheduler initializations for SysPerf");
 	SysPerf_PreSchedulerInit();
 
