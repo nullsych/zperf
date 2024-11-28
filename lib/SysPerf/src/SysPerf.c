@@ -19,11 +19,7 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 #include "SysPerf.h"
 #include "SysPerf_History.h"
-// #include "SysPerf_Keywords.h"
-// #include "SysPerf_DataTypes.h"
-// #include "SysPerf_Constants.h"
 #include "SysPerf_RTOS_Wrapper.h"
-#include "SysPerf_SetupData.h"
 #include "SysPerf_Cfg.cfg"
 
 /*******************************************************************************************************************

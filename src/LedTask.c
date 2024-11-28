@@ -17,21 +17,8 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LedTask, LOG_LEVEL_DBG);
 
-K_THREAD_STACK_DEFINE(LED_Task_stack_area, LED_TASK_STACKSIZE);
-
-TASK_LOCAL struct k_thread Led_zthread_data;
-TASK_LOCAL k_tid_t Led_zid;
-TASK_LOCAL uint8_t Led_taskId = LED_TASKID;
-TASK_LOCAL const char *Led_taskName = "Task_LED";
-
-TASK_LOCAL TASK_ENTRY_POINT void Task_LED(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL TASK_ENTRY_POINT void Task_LED_entry(void)
 {
-   ARG_UNUSED(unused_arg1);
-   ARG_UNUSED(unused_arg2);
-   ARG_UNUSED(unused_arg3);
-
-   k_thread_custom_data_set((void *)Led_taskId);
-
    Leds_init();
 
    for (;;)
@@ -40,32 +27,8 @@ TASK_LOCAL TASK_ENTRY_POINT void Task_LED(void *unused_arg1, void *unused_arg2, 
    }
 }
 
-void Led_createTask(void)
-{
-   Led_zid = k_thread_create(&Led_zthread_data, LED_Task_stack_area,
-                             K_THREAD_STACK_SIZEOF(LED_Task_stack_area),
-                             Task_LED, NULL, NULL, NULL,
-                             LED_TASK_PRIORITY, 0, K_FOREVER);
-
-   k_thread_name_set(Led_zid, Led_taskName);
-
-   LOG_INF("LED Task starting, zid: 0x%x", (unsigned int)Led_zid);
-
-   k_thread_start(Led_zid);
-}
-
-/**
- * @brief Start a Thread Analyzer as separate thread to get a little runtime statistics.
- */
-/*
-void ThreadAnalyzerTask(void)
-{
-   while (1)
-   {
-      thread_analyzer_print();
-      k_msleep(1000);
-   }
-}
-*/
+/* Define the thread using a macro */
+K_THREAD_DEFINE(Task_LED, LED_TASK_STACKSIZE, Task_LED_entry, NULL, NULL, NULL,
+                LED_TASK_PRIORITY, 0, 0);
 
 /* EOF */

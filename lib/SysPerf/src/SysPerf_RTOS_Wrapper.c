@@ -10,7 +10,6 @@
  *                                             RTOS-SPECIFIC HEADERS                                                *
  *******************************************************************************************************************/
 #include <zephyr/kernel.h>
-// #include <zephyr/arch/arm/irq.h>
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/tracing/tracing.h>
 #include <stdint-gcc.h>
@@ -22,7 +21,6 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 *                                                SYSPERF HEADERS                                                   *
 *******************************************************************************************************************/
 #include "SysPerf_DataTypes.h"
-#include "SysPerf_SetupData.h"
 #include "SysPerf_Keywords.h"
 
 /*******************************************************************************************************************
@@ -30,14 +28,22 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 ********************************************************************************************************************/
 
 /**
- * @brief Get unique ID (RTOS specific) of the current Task (Thread).
+ * @brief Get unique taskId (zephyr thread ID) of the current Task (Thread).
  */
 RTOS_WRAPPER uint32_t SysPerf_GetTaskId(void)
 {
    /**
-    * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect
+    * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect.
     */
    return (uint32_t)k_sched_current_thread_query();
+}
+
+/**
+ * @brief Get task iterator (SysPerf specific) based on taskId (zephyr thread ID).
+ */
+RTOS_WRAPPER uint8_t SysPerf_GetTaskIterator(uint32_t taskId)
+{
+   return (uint8_t)k_thread_custom_data_get();
 }
 
 /**
@@ -48,17 +54,11 @@ RTOS_WRAPPER uint32_t SysPerf_GetIsrId(void)
    return (uint32_t)__get_IPSR();
 }
 
-SPK_LOCAL RTOS_WRAPPER void SysPerf_LocalCallback(sp_TaskPtr thread, void *user_data)
+SPK_LOCAL RTOS_WRAPPER void SysPerf_EnumerateCallback(sp_TaskPtr thread, void *user_data)
 {
    static uint8_t taskIterator = 0U;
-
-   SP_TRACE_INFO("+ k_thread_foreach -> thread name  : %s", thread->name);
-   SP_TRACE_INFO("+ k_thread_foreach -> thread zid   : 0x%x", (uint32_t)thread);
-   SP_TRACE_INFO("+ k_thread_foreach -> thread prio  : %u", (uint8_t)thread->base.prio);
-   SP_TRACE_INFO("+ k_thread_foreach -> thread stack : %u", (uint32_t)thread->stack_info.size);
-   SP_TRACE_INFO("+ k_thread_foreach -> iterator     : %u\n", taskIterator);
-
-   SysPerf_StartupData_Init(taskIterator, (uint32_t)thread, thread->name, (uint8_t)thread->base.prio, (uint32_t)thread->stack_info.size);
+   /* Numerate threads */
+   k_thread_custom_data_set((void *)taskIterator);
    taskIterator++;
 }
 
@@ -70,15 +70,7 @@ RTOS_WRAPPER void SysPerf_InitRTUConfiguration(void)
    /**
     * @note Assign pointer to the local callback function to save cfg
     */
-   k_thread_foreach(SysPerf_LocalCallback, NULL);
-}
-
-/**
- * @brief Get task index (SysPerf specific) based on taskId.
- */
-RTOS_WRAPPER uint8_t SysPerf_GetTaskIterator(uint32_t taskId)
-{
-   return SysPerf_StartupData_GetTaskIterator(taskId);
+   k_thread_foreach(SysPerf_EnumerateCallback, NULL);
 }
 
 RTOS_WRAPPER uint32_t SysPerf_GetUptimeTimestamp(void)

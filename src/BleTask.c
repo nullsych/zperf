@@ -26,18 +26,13 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(BleTask, LOG_LEVEL_DBG);
 
-K_THREAD_STACK_DEFINE(BLE_Task_stack_area, BLE_TASK_STACKSIZE);
-
-TASK_LOCAL struct k_thread Ble_zthread_data;
-TASK_LOCAL k_tid_t Ble_zid;
-TASK_LOCAL uint8_t Ble_taskId = BLE_TASKID;
-TASK_LOCAL const char *Ble_taskName = "Task_BLE";
-
-TASK_LOCAL const struct bt_data Ble_advertisingData[] = {
+TASK_LOCAL const struct bt_data Ble_advertisingData[] =
+{
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
     BT_DATA_BYTES(BT_DATA_UUID16_ALL,
-                  BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
-                  BT_UUID_16_ENCODE(BT_UUID_DIS_VAL))};
+    BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
+    BT_UUID_16_ENCODE(BT_UUID_DIS_VAL))
+};
 
 TASK_LOCAL void Ble_connected(struct bt_conn *conn, uint8_t errCode)
 {
@@ -140,29 +135,13 @@ TASK_LOCAL void Ble_main(void)
     }
 }
 
-TASK_LOCAL TASK_ENTRY_POINT void Task_BLE(void *unused_arg1, void *unused_arg2, void *unused_arg3)
+TASK_LOCAL TASK_ENTRY_POINT void Task_BLE_entry(void)
 {
-    ARG_UNUSED(unused_arg1);
-    ARG_UNUSED(unused_arg2);
-    ARG_UNUSED(unused_arg3);
-
-    k_thread_custom_data_set((void *)Ble_taskId);
-
     Ble_main();
 }
 
-void Ble_createTask(void)
-{
-    Ble_zid = k_thread_create(&Ble_zthread_data, BLE_Task_stack_area,
-                              K_THREAD_STACK_SIZEOF(BLE_Task_stack_area),
-                              Task_BLE, NULL, NULL, NULL,
-                              BLE_TASK_PRIORITY, 0, K_FOREVER);
-
-    k_thread_name_set(Ble_zid, Ble_taskName);
-
-    LOG_INF("BLE Task starting, zid: 0x%x", (unsigned int)Ble_zid);
-
-    k_thread_start(Ble_zid);
-}
+/* Define the thread using a macro */
+K_THREAD_DEFINE(Task_BLE, BLE_TASK_STACKSIZE, Task_BLE_entry, NULL, NULL, NULL,
+                BLE_TASK_PRIORITY, 0, 0);
 
 /* EOF */

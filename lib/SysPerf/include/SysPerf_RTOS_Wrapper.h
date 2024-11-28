@@ -19,7 +19,7 @@
 *******************************************************************************************************************/
 
 extern RTOS_WRAPPER  uint32_t           SysPerf_GetTaskId(void);
-extern RTOS_WRAPPER  void             SysPerf_InitRTUConfiguration(void);
+extern RTOS_WRAPPER  void               SysPerf_InitRTUConfiguration(void);
 extern RTOS_WRAPPER  uint8_t            SysPerf_GetTaskIterator(uint32_t);
 extern RTOS_WRAPPER  uint32_t           SysPerf_GetUptimeTimestamp(void);
 
