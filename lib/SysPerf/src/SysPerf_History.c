@@ -1,5 +1,5 @@
 /**
- * @file   HistoryHandler.c
+ * @file   SysPerf_History.c
  * @brief
  * @author kvant6ubl
  * @date   Jule 9, 2024

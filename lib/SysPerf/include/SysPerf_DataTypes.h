@@ -47,15 +47,6 @@ typedef struct SPK_PACKED
     uint8_t  state;
 } sp_Hook;
 
-/* Start-up configuration info */
-typedef struct SPK_PACKED
-{
-    sp_TaskStackSize stackSize;
-    sp_TaskPrio priority;
-    uint8_t taskIterator;
-    char taskName[SP_TASK_NAME_LEN];
-} sp_TaskConfigInfo;
-
 /* Task (Thread) runtime information */
 typedef struct SPK_PACKED
 {
@@ -84,12 +75,5 @@ typedef struct SPK_PACKED
     uint32_t IdleRuntime;
     uint32_t timestamp;
 } sp_UptimeStatistic_t;
-
-/* Start-up configuration info handler for Tasks (Threads) with unique identifier */
-typedef struct SPK_PACKED
-{
-   uint32_t taskId;
-   sp_TaskConfigInfo data;
-} sp_TaskConfigInfoHandler;
 
 #endif /* SYS_PERF_DATATYPES_H */

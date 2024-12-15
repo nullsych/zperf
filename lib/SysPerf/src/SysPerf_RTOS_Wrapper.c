@@ -22,6 +22,7 @@ LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 #include "SysPerf_DataTypes.h"
 #include "SysPerf_Keywords.h"
+#include "SysPerf.h"
 
 /*******************************************************************************************************************
 *                                            WRAPPER API IMPLEMENTATION                                            *
@@ -43,7 +44,16 @@ RTOS_WRAPPER uint32_t SysPerf_GetTaskId(void)
  */
 RTOS_WRAPPER uint8_t SysPerf_GetTaskIterator(uint32_t taskId)
 {
-   return (uint8_t)k_thread_custom_data_get();
+   k_tid_t id = (k_tid_t)(taskId);
+   return (uint8_t)(uintptr_t)id->custom_data;
+}
+
+/**
+ * @brief Get task name based on taskId (zephyr thread ID).
+ */
+RTOS_WRAPPER const char* SysPerf_GetTaskName(uint32_t taskId)
+{
+   return k_thread_name_get((k_tid_t)taskId);
 }
 
 /**
@@ -56,9 +66,24 @@ RTOS_WRAPPER uint32_t SysPerf_GetIsrId(void)
 
 SPK_LOCAL RTOS_WRAPPER void SysPerf_EnumerateCallback(sp_TaskPtr thread, void *user_data)
 {
-   static uint8_t taskIterator = 0U;
-   /* Numerate threads */
-   k_thread_custom_data_set((void *)taskIterator);
+   static uint8_t taskIterator = 0;
+
+   /* Here k_thread_custom_data_set() is not used cause id doesn't allowed to write it during k_thread_foreach */
+   // k_thread_custom_data_set((void *)(uintptr_t)taskIterator);
+
+   /* Instead of this we use also not the best option by casting away a const qualification on thread object of pointer type. */
+   k_tid_t mod_thread = (k_tid_t)(thread);
+
+   /* And assign a taskIterator to it*/
+   mod_thread->custom_data = (void *)(uintptr_t)taskIterator;
+
+   /* Print config data */
+   SP_TRACE_INFO("Iterating %d thread in the system. Thread data: ", (uint8_t)(uintptr_t)mod_thread->custom_data);
+   SP_TRACE_INFO("      Name        : %s", mod_thread->name);
+   SP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
+   SP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
+   SP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
+
    taskIterator++;
 }
 

@@ -139,6 +139,9 @@ RTOS_CALLED void SysPerf_PreTaskHook(void)
    taskId = SysPerf_GetTaskId();
    taskIterator = SysPerf_GetTaskIterator(taskId);
 
+   // SP_TRACE_INFO("SysPerf_PreTaskHook ----> taskIterator: %d", taskIterator);
+   // SP_TRACE_INFO("SysPerf_PreTaskHook ----> SysPerf_GetTaskName: %s", SysPerf_GetTaskName(taskId));
+
    if (TASK_IS_VALID(taskIterator))
    {
       Hook_TasksStatistics[taskIterator].taskTimestamp = timestamp;
@@ -165,6 +168,10 @@ RTOS_CALLED void SysPerf_PostTaskHook(void)
 
    taskId = SysPerf_GetTaskId();
    taskIterator = SysPerf_GetTaskIterator(taskId);
+
+   // SP_TRACE_INFO("SysPerf_PostTaskHook ----> taskIterator: %d", taskIterator);
+
+   // SP_TRACE_INFO("SysPerf_PostTaskHook ----> SysPerf_GetTaskName: %s", SysPerf_GetTaskName(taskId));
 
    if (TASK_IS_VALID(taskIterator))
    {
@@ -393,7 +400,6 @@ SPK_LOCAL void SysPerf_CycleBackup(void)
    SysPerf_IsrLock(&key);
    memcpy(&TraceCycle_TasksStatistics, &Hook_TasksStatistics, sizeof(Hook_TasksStatistics));
    memcpy(&TraceCycle_UptimeStatistic, &Hook_UptimeStatistic, sizeof(Hook_UptimeStatistic));
-   // add delta !!!
    SysPerf_IsrUnlock(key);
 }
 
