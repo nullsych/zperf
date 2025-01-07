@@ -1,5 +1,5 @@
 /**
- * @file   SysPerf_RTOS_Map.h
+ * @file   RTOS_Map.h
  * @brief  Map RTOS-specific functionality: logs, constants, etc.
  * @author kvant6ubl
  * @date   May 17, 2024

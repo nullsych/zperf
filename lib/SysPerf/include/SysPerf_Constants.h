@@ -9,7 +9,7 @@
 #ifndef SYS_PERF_CONSTANTS_H
 #define SYS_PERF_CONSTANTS_H
 
-#include "SysPerf_RTOS_Map.h"
+#include "RTOS_Map.h"
 
 #define SP_TASK_COUNT                       MAP_RTOS_OVERALL_TASKS_COUNT /* Overall number of Tasks in the system */
 #define SP_IDLE_COUNT                       MAP_RTOS_IDLE_TASK_COUNT     /* Total number of Idle Tasks            */

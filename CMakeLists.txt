@@ -22,7 +22,9 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/common/PwrMgt
 # Include directories for SysPerf
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/wrapper
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/cfg
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/map
 )
 
 # Add application sources

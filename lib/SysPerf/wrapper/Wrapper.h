@@ -1,5 +1,5 @@
 /**
- * @file   SysPerf_RTOS_Wrapper.c
+ * @file   Wrapper.h
  * @brief  Implementation of wrappers that encapsulate RTOS-specific API.
  * @author kvant6ubl
  * @date   Jul 18, 2024
@@ -13,9 +13,6 @@
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/tracing/tracing.h>
 #include <stdint-gcc.h>
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(SysPerf_RTOS_Wrapper, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
 *                                                SYSPERF HEADERS                                                   *
@@ -64,7 +61,7 @@ RTOS_WRAPPER uint32_t SysPerf_GetIsrId(void)
    return (uint32_t)__get_IPSR();
 }
 
-SPK_LOCAL RTOS_WRAPPER void SysPerf_EnumerateCallback(sp_TaskPtr thread, void *user_data)
+RTOS_WRAPPER void SysPerf_EnumerateCallback(sp_TaskPtr thread, void *user_data)
 {
    static uint8_t taskIterator = 0;
 
@@ -90,7 +87,7 @@ SPK_LOCAL RTOS_WRAPPER void SysPerf_EnumerateCallback(sp_TaskPtr thread, void *u
 /**
  * @brief Saves RTU's (Runtime Unit, Tasks/ISRs) configuration.
  */
-RTOS_WRAPPER void SysPerf_InitRTUConfiguration(void)
+RTOS_WRAPPER void SysPerf_InitConfiguration(void)
 {
    /**
     * @note Assign pointer to the local callback function to save cfg

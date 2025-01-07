@@ -1,5 +1,5 @@
 /**
- * @file   SysPerf_RTOS_SystemHooks.h
+ * @file   RTOS_Hooks.h
  * @brief  Implement RTOS-specific hook functions with invoked SysPerf's API.
  * @author kvant6ubl
  * @date   May 6, 2024

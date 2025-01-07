@@ -9,7 +9,7 @@
 #ifndef SYS_PERF_DATATYPES_H
 #define SYS_PERF_DATATYPES_H
 
-#include "SysPerf_RTOS_Map.h"
+#include "RTOS_Map.h"
 #include "SysPerf_Constants.h"
 #include "SysPerf_Keywords.h"
 

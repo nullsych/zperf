@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(SysPerf, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 #include "SysPerf.h"
 #include "SysPerf_History.h"
-#include "SysPerf_RTOS_Wrapper.h"
+#include "Wrapper.h"
 #include "SysPerf_Cfg.cfg"
 
 /*******************************************************************************************************************
@@ -253,7 +253,7 @@ USER_CALLED void SysPerf_PreSchedulerInit(void)
 
 USER_CALLED void SysPerf_PostSchedulerInit(void)
 {
-   SysPerf_InitRTUConfiguration();
+   SysPerf_InitConfiguration();
 }
 
 USER_CALLED void SysPerf_TraceHistory(void)

@@ -15,7 +15,7 @@
 #include "common/TasksApi.h"
 
 /* SysPerf's hooks, used under Zephyr's hooks */
-#include <SysPerf_RTOS_SystemHooks.h>
+#include <RTOS_Hooks.h>
 
 /* SysPerf's global API */
 #include <SysPerf.h>
