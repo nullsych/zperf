@@ -1,8 +1,9 @@
-# zephyr
+# zephyr & west
 build/
+.west/
 
 # .vscode
 .vscode/
 
-# tools
-tools/*.txt
+# DebugSessions
+target/

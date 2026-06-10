@@ -1,51 +1,25 @@
-cmake_minimum_required(VERSION 3.20.0)
+if(CONFIG_NRF_PERF)
+    set(NRF_PERF_INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/wrapper
+        ${CMAKE_CURRENT_SOURCE_DIR}/cfg
+        ${CMAKE_CURRENT_SOURCE_DIR}/map
+    )
 
-# Include main Zephyr SDK
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    zephyr_library_named(nrf_perf)
 
-project(NrfSysPerfDemo)
+    zephyr_library_sources(
+        src/nrf_perf.c
+        src/nrf_perf_history.c
+        wrapper/nrf_perf_zephyr_wrapper.c
+        map/rtos_hooks.c
+    )
 
-FILE(GLOB MAIN_SOURCES ./src/*.c)
-FILE(GLOB CMN_SOURCES ./src/common/Leds/*.c)
-FILE(GLOB PM_SOURCES ./src/PwrMgt/*.c)
+    zephyr_library_include_directories(
+        ${NRF_PERF_INCLUDE_DIRS}
+    )
 
-# Add SysPerf library
-add_subdirectory(lib/SysPerf)
-
-# Include project directories
-target_include_directories(
-    app
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/common/Leds
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/common/PwrMgt
-# Include directories for SysPerf
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/wrapper
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/cfg
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/SysPerf/map
-)
-
-# Add application sources
-target_sources(
-    app
-    PRIVATE
-    ${MAIN_SOURCES}
-    ${CMN_SOURCES}
-    ${PM_SOURCES}
-)
-
-# Add SysPerf build directory to link directories
-target_link_directories(
-    app
-    PRIVATE
-    ${CMAKE_BINARY_DIR}/lib/SysPerf
-)
-
-# Link SysPerf library
-target_link_libraries(
-    app
-    PRIVATE
-    SysPerf
-)
+    zephyr_include_directories(
+        ${NRF_PERF_INCLUDE_DIRS}
+    )
+endif()

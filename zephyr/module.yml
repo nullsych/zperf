@@ -1,0 +1,4 @@
+name: nrf_perf
+build:
+  cmake: .
+  kconfig: Kconfig
