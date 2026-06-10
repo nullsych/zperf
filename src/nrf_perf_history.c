@@ -29,62 +29,62 @@ LOG_MODULE_REGISTER(nrf_perf_history, LOG_LEVEL_DBG);
  * @details Store a system 'footprint' for last microseconds.
  * Could be used for runtime analysis in cases of thread starvation or sporadically resets.
  */
-SPK_LOCAL sp_HookHistory      HistoryHandler;
+NP_LOCAL np_HookHistory      history_handler;
 
 /**
- * @brief Index for HistoryHandler's circular buffer.
+ * @brief Index for history_handler's circular buffer.
  */
-SPK_LOCAL uint32_t            HistoryIndex  = 0U;
+NP_LOCAL uint32_t            history_index  = 0U;
 
 /**
- * @brief Size for HistoryHandler's circular buffer.
+ * @brief Size for history_handler's circular buffer.
  */
-SPK_LOCAL uint32_t            HistorySize = 0U;
+NP_LOCAL uint32_t            history_size = 0U;
 
 /*******************************************************************************************************************
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 
-HOOK_CALLED uint8_t nrf_perf_history_get_last_state(void)
+NP_HOOK_CALLED uint8_t nrf_perf_history_get_last_state(void)
 {
-   return HistoryHandler.entities[HistoryIndex].state;
+   return history_handler.entities[history_index].state;
 }
 
-HOOK_CALLED uint32_t nrf_perf_history_get_last_timestamp(void)
+NP_HOOK_CALLED uint32_t nrf_perf_history_get_last_timestamp(void)
 {
-   return HistoryHandler.entities[HistoryIndex].timestamp;
+   return history_handler.entities[history_index].timestamp;
 }
 
-HOOK_CALLED uint8_t nrf_perf_history_get_last_task(void)
+NP_HOOK_CALLED uint8_t nrf_perf_history_get_last_task(void)
 {
-   return HistoryHandler.entities[HistoryIndex].identifier;
+   return history_handler.entities[history_index].identifier;
 }
 
-HOOK_CALLED void nrf_perf_history_init(void)
+NP_HOOK_CALLED void nrf_perf_history_init(void)
 {
-   HistoryIndex = 0U;
-   HistorySize  = 0U;
+   history_index = 0U;
+   history_size  = 0U;
 }
 
-HOOK_CALLED void nrf_perf_history_dump_byte_stream(void)
+NP_HOOK_CALLED void nrf_perf_history_dump_byte_stream(void)
 {
    // TODO: add crc32 calculation
-   // TODO: dump byte-stream from history in UART
+   // TODO: dump byte-stream from history
 }
 
-HOOK_CALLED void nrf_perf_history_clear(void)
+NP_HOOK_CALLED void nrf_perf_history_clear(void)
 {
-   for (uint32_t idx = 0; idx < HistorySize; idx++)
+   for (uint32_t idx = 0; idx < history_size; idx++)
    {
-      HistoryHandler.entities[idx].identifier = 0;
-      HistoryHandler.entities[idx].state = 0;
-      HistoryHandler.entities[idx].timestamp = 0;
+      history_handler.entities[idx].identifier = 0;
+      history_handler.entities[idx].state = 0;
+      history_handler.entities[idx].timestamp = 0;
    }
 }
 
-HOOK_CALLED void nrf_perf_history_update(uint32_t identifier, uint32_t timestamp, uint8_t state)
+NP_HOOK_CALLED void nrf_perf_history_update(uint32_t identifier, uint32_t timestamp, uint8_t state)
 {
-   sp_Hook *currentEntity = &HistoryHandler.entities[HistoryIndex];
+   np_hook *currentEntity = &history_handler.entities[history_index];
 
    if (currentEntity != NULL)
    {
@@ -92,23 +92,23 @@ HOOK_CALLED void nrf_perf_history_update(uint32_t identifier, uint32_t timestamp
       currentEntity->identifier = identifier;
       currentEntity->timestamp = timestamp;
 
-      HistoryIndex++;
-      HistoryIndex %= SP_HISTORY_SIZE;
-      HistorySize = (HistorySize < SP_HISTORY_SIZE) ? (HistorySize + 1) : SP_HISTORY_SIZE;
+      history_index++;
+      history_index %= NP_HISTORY_SIZE;
+      history_size = (history_size < NP_HISTORY_SIZE) ? (history_size + 1) : NP_HISTORY_SIZE;
    }
 }
 
-USER_CALLED void nrf_perf_history_trace_collected(void)
+NP_USER_CALLED void nrf_perf_history_trace_collected(void)
 {
-   SP_TRACE_INFO("# ############### Collected History ############### #");
-   SP_TRACE_INFO("#                                                   #");
-   SP_TRACE_INFO("#    Task Id             Mask         Timestamp    #");
+   NP_TRACE_INFO("# ############### Collected History ############### #");
+   NP_TRACE_INFO("#                                                   #");
+   NP_TRACE_INFO("#    Task Id             Mask         Timestamp    #");
 
-   for (uint32_t idx = 0; idx < HistorySize; idx++)
+   for (uint32_t idx = 0; idx < history_size; idx++)
    {
-      SP_TRACE_INFO("%s %8u %17u %18u %5s",
-                    "#", HistoryHandler.entities[idx].identifier, HistoryHandler.entities[idx].state,
-                    HistoryHandler.entities[idx].timestamp, "#");
+      NP_TRACE_INFO("%s %8u %17u %18u %5s",
+                    "#", history_handler.entities[idx].identifier, history_handler.entities[idx].state,
+                    history_handler.entities[idx].timestamp, "#");
    }
-   SP_TRACE_INFO("# ################################################# #\n");
+   NP_TRACE_INFO("# ################################################# #\n");
 }

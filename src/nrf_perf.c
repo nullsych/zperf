@@ -28,96 +28,96 @@ LOG_MODULE_REGISTER(nrf_perf, LOG_LEVEL_DBG);
 *******************************************************************************************************************/
 
 /**
- * @brief Intermediate storage for uptime statistic, reset within 1 trace cycle (SP-cycle).
- * @details All collected data later copied to TraceCycle_UptimeStatistic.
+ * @brief Intermediate storage for uptime statistic, reset within 1 trace cycle (window cycle).
+ * @details All collected data later copied to window_uptime_statistic.
  */
-SPK_LOCAL sp_UptimeStatistic_t       Hook_UptimeStatistic;
+NP_LOCAL np_uptime_statistic_t       hook_uptime_statistic;
 
 /**
- * @brief Intermediate storage for Tasks (Threads) runtime statistic, reset within 1 trace cycle (SP-cycle).
- * @details All collected data later copied to TraceCycle_TasksStatistics.
+ * @brief Intermediate storage for Tasks (Threads) runtime statistic, reset within 1 trace cycle (window cycle).
+ * @details All collected data later copied to window_tasks_statistic.
  */
-SPK_LOCAL sp_TaskRuntime             Hook_TasksStatistics[SP_TASK_COUNT];
+NP_LOCAL np_task_runtime             hook_tasks_statistics[NP_TASK_COUNT];
 
 
 /**
  * @brief Idle task runtime metadata.
  */
-SPK_LOCAL uint8_t                    Idle_TaskIterator = SP_UNINIT;
-SPK_LOCAL uint32_t                   Idle_TaskId       = SP_UNINIT;
+NP_LOCAL uint8_t                    idle_task_iterator = NP_UNINIT;
+NP_LOCAL uint32_t                   idle_task_id       = NP_UNINIT;
 
 /**
  * @brief Store a copy of uptime statistic when nrf_perf_cycle_backup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SPK_LOCAL sp_UptimeStatistic_t       TraceCycle_UptimeStatistic;
+NP_LOCAL np_uptime_statistic_t       window_uptime_statistic;
 
 /**
  * @brief Store a copy of Tasks (Threads) runtime statistic when nrf_perf_cycle_backup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
-SPK_LOCAL sp_TaskRuntime             TraceCycle_TasksStatistics[SP_TASK_COUNT];
+NP_LOCAL np_task_runtime             window_tasks_statistic[NP_TASK_COUNT];
 
 /*******************************************************************************************************************
 *                                             nrf_perf LOCAL API                                                    *
 *******************************************************************************************************************/
-SPK_LOCAL uint32_t nrf_perf_get_task_runtime(uint8_t taskIterator, uint32_t timeStamp);
-SPK_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t, uint32_t);
-SPK_LOCAL uint32_t nrf_perf_get_system_runtime(void);
-SPK_LOCAL uint32_t nrf_perf_get_idle_runtime(void);
+NP_LOCAL uint32_t nrf_perf_get_task_runtime(uint8_t task_iterator, uint32_t timestamp);
+NP_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t, uint32_t);
+NP_LOCAL uint32_t nrf_perf_get_system_runtime(void);
+NP_LOCAL uint32_t nrf_perf_get_idle_runtime(void);
 
-SPK_LOCAL void nrf_perf_cycle_backup(void);
+NP_LOCAL void nrf_perf_cycle_backup(void);
 
-SPK_LOCAL void nrf_perf_isr_lock(unsigned int *key);
-SPK_LOCAL void nrf_perf_isr_unlock(unsigned int key);
-SPK_LOCAL void nrf_perf_reset_runtime_statistic(void);
+NP_LOCAL void nrf_perf_isr_lock(unsigned int *key);
+NP_LOCAL void nrf_perf_isr_unlock(unsigned int key);
+NP_LOCAL void nrf_perf_reset_runtime_statistic(void);
 
-SPK_LOCAL void nrf_perf_trace_cycle_statistic(uint32_t *);
-SPK_LOCAL void nrf_perf_trace_cpu_usage(uint32_t *);
-SPK_LOCAL void nrf_perf_trace_uptime_statistic(void);
+NP_LOCAL void nrf_perf_trace_cycle_statistic(uint32_t *);
+NP_LOCAL void nrf_perf_trace_cpu_usage(uint32_t *);
+NP_LOCAL void nrf_perf_trace_uptime_statistic(void);
 
-SPK_LOCAL_INLINE void nrf_perf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp, uint32_t isrRuntime);
-SPK_LOCAL_INLINE void nrf_perf_update_task_statistic(uint8_t taskIterator, uint32_t timestamp, uint32_t taskRuntime);
-SPK_LOCAL_INLINE void nrf_perf_update_idle_statistic(uint32_t timestamp);
-SPK_LOCAL_INLINE void nrf_perf_update_uptime_statistic(uint8_t taskIterator, uint32_t taskRuntime, sp_TaskRuntime *task);
+NP_LOCAL_INLINE void nrf_perf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp, uint32_t isrRuntime);
+NP_LOCAL_INLINE void nrf_perf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp, uint32_t task_runtime);
+NP_LOCAL_INLINE void nrf_perf_update_idle_statistic(uint32_t timestamp);
+NP_LOCAL_INLINE void nrf_perf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime, np_task_runtime *task);
 
-SPK_LOCAL_INLINE void nrf_perf_reset_trace_cycle_statistic(uint8_t taskIterator);
-SPK_LOCAL_INLINE void nrf_perf_reset_hooks_statistic(uint8_t taskIterator);
+NP_LOCAL_INLINE void nrf_perf_reset_trace_cycle_statistic(uint8_t task_iterator);
+NP_LOCAL_INLINE void nrf_perf_reset_hooks_statistic(uint8_t task_iterator);
 
 /*******************************************************************************************************************
 *                                          USER API IMPLEMENTATION                                                 *
 *******************************************************************************************************************/
 
 /**
- * @brief Trace Tasks (Threads) & ISRs runtime statistic per SP-cycle.
+ * @brief Trace Tasks (Threads) & ISRs runtime statistic per window cycle.
  *
  */
-USER_CALLED void nrf_perf_runtime_overall_statistic(void)
+NP_USER_CALLED void nrf_perf_runtime_overall_statistic(void)
 {
-   uint32_t timeslice;
-   uint32_t currTimestamp;
-   static uint32_t lastTimestamp = 0U;
+   uint32_t time_slice = 0;
+   uint32_t curr_timestamp = 0;
+   static uint32_t last_timestamp = 0U;
 
    nrf_perf_cycle_backup();
 
-   /* Calculate timeslice */
-   currTimestamp = nrf_perf_get_uptime_timestamp();
-   timeslice = nrf_perf_get_timestamp_delta(lastTimestamp, currTimestamp);
-   lastTimestamp = currTimestamp;
+   /* Calculate time_slice */
+   curr_timestamp = nrf_perf_get_uptime_timestamp();
+   time_slice = nrf_perf_get_timestamp_delta(last_timestamp, curr_timestamp);
+   last_timestamp = curr_timestamp;
 
-#if (SP_CFG_TRACE_MAIN_STAT == SP_CFG_ON)
-   nrf_perf_trace_cycle_statistic(&timeslice);
+#if (NP_CFG_TRACE_MAIN_STAT == NP_CFG_ON)
+   nrf_perf_trace_cycle_statistic(&time_slice);
 #endif
 
-#if (SP_CFG_TRACE_UPTIME == SP_CFG_ON)
+#if (NP_CFG_TRACE_UPTIME == NP_CFG_ON)
    nrf_perf_trace_uptime_statistic();
 #endif
 
-#if (SP_CFG_TRACE_CPU_LOAD == SP_CFG_ON)
-   nrf_perf_trace_cpu_usage(&timeslice);
+#if (NP_CFG_TRACE_CPU_LOAD == NP_CFG_ON)
+   nrf_perf_trace_cpu_usage(&time_slice);
 #endif
 
-#if (SP_CFG_TRACE_HISTORY == SP_CFG_ON)
+#if (NP_CFG_TRACE_HISTORY == NP_CFG_ON)
    nrf_perf_history_trace_collected();
 #endif
 
@@ -129,27 +129,22 @@ USER_CALLED void nrf_perf_runtime_overall_statistic(void)
 *                                       nrf_perf HOOKS IMPLEMENTATION                                               *
 *******************************************************************************************************************/
 
-RTOS_CALLED void nrf_perf_pre_task_hook(void)
+NP_RTOS_CALLED void nrf_perf_pre_task_hook(void)
 {
-   uint8_t  taskIterator;
-   uint32_t taskId;
-   uint32_t timestamp = 0U;
+   uint32_t timestamp = nrf_perf_get_uptime_timestamp();
+   uint32_t task_id = nrf_perf_get_task_id();
+   uint8_t task_iterator = nrf_perf_get_task_iterator(task_id);
 
-   timestamp = nrf_perf_get_uptime_timestamp();
-   taskId = nrf_perf_get_task_id();
-   taskIterator = nrf_perf_get_task_iterator(taskId);
-
-
-   if (TASK_IS_VALID(taskIterator))
+   if (TASK_IS_VALID(task_iterator))
    {
-      Hook_TasksStatistics[taskIterator].taskTimestamp = timestamp;
+      hook_tasks_statistics[task_iterator].task_timestamp = timestamp;
 
       if (IDLE_STATE_RUNNING == nrf_perf_history_get_last_state())
       {
          nrf_perf_update_idle_statistic(timestamp);
       }
 
-      nrf_perf_history_update(taskId, timestamp, TASK_STATE_ENTER);
+      nrf_perf_history_update(task_id, timestamp, TASK_STATE_ENTER);
    }
    else
    {
@@ -157,23 +152,23 @@ RTOS_CALLED void nrf_perf_pre_task_hook(void)
    }
 }
 
-RTOS_CALLED void nrf_perf_post_task_hook(void)
+NP_RTOS_CALLED void nrf_perf_post_task_hook(void)
 {
-   uint8_t  taskIterator;
-   uint32_t taskId;
-   uint32_t taskRuntime;
-   uint32_t timestamp = 0U;
+   uint8_t  task_iterator = 0;
+   uint32_t task_id = 0;
+   uint32_t task_runtime = 0;
+   uint32_t timestamp = 0;
 
-   taskId = nrf_perf_get_task_id();
-   taskIterator = nrf_perf_get_task_iterator(taskId);
+   task_id = nrf_perf_get_task_id();
+   task_iterator = nrf_perf_get_task_iterator(task_id);
 
-   if (TASK_IS_VALID(taskIterator))
+   if (TASK_IS_VALID(task_iterator))
    {
       timestamp = nrf_perf_get_uptime_timestamp();
-      taskRuntime = nrf_perf_get_task_runtime(taskIterator, timestamp);
-      nrf_perf_update_task_statistic(taskIterator, timestamp, taskRuntime);
+      task_runtime = nrf_perf_get_task_runtime(task_iterator, timestamp);
+      nrf_perf_update_task_statistic(task_iterator, timestamp, task_runtime);
 
-      nrf_perf_history_update(taskId, timestamp, TASK_STATE_EXIT);
+      nrf_perf_history_update(task_id, timestamp, TASK_STATE_EXIT);
    }
    else
    {
@@ -181,9 +176,9 @@ RTOS_CALLED void nrf_perf_post_task_hook(void)
    }
 }
 
-RTOS_CALLED void nrf_perf_pre_isr_hook(void)
+NP_RTOS_CALLED void nrf_perf_pre_isr_hook(void)
 {
-   uint32_t timestamp;
+   uint32_t timestamp = 0;
 
    timestamp = nrf_perf_get_uptime_timestamp();
 
@@ -200,38 +195,35 @@ RTOS_CALLED void nrf_perf_pre_isr_hook(void)
 
    if (isr_num != 0)
    {
-      SP_TRACE_INFO("Currently running in ISR number: %u\n", isr_num);
+      NP_TRACE_INFO("Currently running in ISR number: %u\n", isr_num);
    }
    else
    {
-      SP_TRACE_INFO("Currently running in thread context.");
+      NP_TRACE_INFO("Currently running in thread context.");
    }
 */
 }
 
-RTOS_CALLED void nrf_perf_post_isr_hook(void)
+NP_RTOS_CALLED void nrf_perf_post_isr_hook(void)
 {
-   uint32_t timestamp;
-
-   timestamp = nrf_perf_get_uptime_timestamp();
-
+   uint32_t timestamp = nrf_perf_get_uptime_timestamp();
    nrf_perf_history_update(0x000, timestamp, ISR_STATE_EXIT);
 }
 
-RTOS_CALLED void nrf_perf_idle_task_running(void)
+NP_RTOS_CALLED void nrf_perf_idle_task_running(void)
 {
-   static bool idleNotDetermined = true;
+   static bool idle_not_determined = true;
 
-   if (idleNotDetermined)
+   if (idle_not_determined)
    {
-      Idle_TaskId = nrf_perf_get_task_id();
-      Idle_TaskIterator = nrf_perf_get_task_iterator(Idle_TaskId);
-      idleNotDetermined = false;
+      idle_task_id = nrf_perf_get_task_id();
+      idle_task_iterator = nrf_perf_get_task_iterator(idle_task_id);
+      idle_not_determined = false;
    }
 
-   if (Idle_TaskIterator != SP_UNINIT && Idle_TaskId != SP_UNINIT)
+   if (idle_task_iterator != NP_UNINIT && idle_task_id != NP_UNINIT)
    {
-      nrf_perf_history_update(Idle_TaskId, nrf_perf_get_uptime_timestamp(), IDLE_STATE_RUNNING);
+      nrf_perf_history_update(idle_task_id, nrf_perf_get_uptime_timestamp(), IDLE_STATE_RUNNING);
    }
 }
 
@@ -239,18 +231,18 @@ RTOS_CALLED void nrf_perf_idle_task_running(void)
 *                                       USER API IMPLEMENTATION                                                    *
 *******************************************************************************************************************/
 
-USER_CALLED void nrf_perf_pre_scheduler_init(void)
+NP_USER_CALLED void nrf_perf_pre_scheduler_init(void)
 {
    nrf_perf_history_init();
    nrf_perf_reset_runtime_statistic();
 }
 
-USER_CALLED void nrf_perf_post_scheduler_init(void)
+NP_USER_CALLED void nrf_perf_post_scheduler_init(void)
 {
    nrf_perf_init_configuration();
 }
 
-USER_CALLED void nrf_perf_trace_history(void)
+NP_USER_CALLED void nrf_perf_trace_history(void)
 {
    nrf_perf_history_trace_collected();
 }
@@ -259,9 +251,10 @@ USER_CALLED void nrf_perf_trace_history(void)
 *                                         LOCAL API IMPLEMENTATION                                                 *
 *******************************************************************************************************************/
 
-SPK_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t timestamp1, uint32_t timestamp2)
+NP_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t timestamp1, uint32_t timestamp2)
 {
-   uint32_t delta;
+   uint32_t delta = 0;
+
    if (timestamp2 >= timestamp1)
    {
       delta = timestamp2 - timestamp1;
@@ -269,7 +262,7 @@ SPK_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t timestamp1, uint32_t ti
    else
    {
       /* In case of type overflow */
-      delta = (SP_TIMESTAMP_TOP - timestamp1) + timestamp2 + 1;
+      delta = (NP_TIMESTAMP_TOP - timestamp1) + timestamp2 + 1;
    }
 
    return delta;
@@ -278,172 +271,169 @@ SPK_LOCAL uint32_t nrf_perf_get_timestamp_delta(uint32_t timestamp1, uint32_t ti
 /**
  * @brief Calculate total runtime across all Tasks (Threads) running in the system (with Idle task(s))
  */
-SPK_LOCAL uint32_t nrf_perf_get_system_runtime(void)
+NP_LOCAL uint32_t nrf_perf_get_system_runtime(void)
 {
-   uint8_t taskIterator;
-   uint32_t systemTotalRuntime = 0U;
+   uint8_t task_iterator = 0;
+   uint32_t system_total_runtime = 0U;
 
-   for (taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
+   for (task_iterator = 0; task_iterator < NP_TASK_COUNT; task_iterator++)
    {
-      systemTotalRuntime += TraceCycle_TasksStatistics[taskIterator].totalRuntime;
+      system_total_runtime += window_tasks_statistic[task_iterator].total_runtime;
    }
 
-   return systemTotalRuntime;
+   return system_total_runtime;
 }
 
 /**
  * @brief Calculate separately Idle task(s) total runtime
  */
-SPK_LOCAL uint32_t nrf_perf_get_idle_runtime(void)
+NP_LOCAL uint32_t nrf_perf_get_idle_runtime(void)
 {
-   uint32_t idleTotalRuntime = 0U;
+   uint32_t idle_total_runtime = 0U;
 
-   if (SP_UNINIT != Idle_TaskIterator)
+   if (NP_UNINIT != idle_task_iterator)
    {
-      idleTotalRuntime = TraceCycle_TasksStatistics[Idle_TaskIterator].totalRuntime;
+      idle_total_runtime = window_tasks_statistic[idle_task_iterator].total_runtime;
    }
 
-   return idleTotalRuntime;
+   return idle_total_runtime;
 }
 
-SPK_LOCAL void nrf_perf_trace_cpu_usage(uint32_t *timeslice)
+NP_LOCAL void nrf_perf_trace_cpu_usage(uint32_t *time_slice)
 {
-   /* System Tasks (Threads) total runtime per timeslice */
-   uint32_t systemTotalRuntime;
-   /* Percentage with application total runtime per timeslice */
-   uint8_t cpuLoadPercent;
-   /* Percentage with idle total runtime per timeslice */
-   uint8_t idleTimePercent;
+   /* System Tasks (Threads) total runtime per time_slice */
+   uint32_t system_total_runtime;
+   /* Percentage with application total runtime per time_slice */
+   uint8_t cpu_load_per;
+   /* Percentage with idle total runtime per time_slice */
+   uint8_t idle_time_per;
    /* Percentage for os resource runtime (scheduling etc) */
-   uint8_t osTimePercent;
-   /* Idle task(s) total runtime per timeslice */
-   uint32_t idleTotalRuntime;
-   /* Os total runtime per timeslice */
-   uint32_t osTotalRuntime;
+   uint8_t os_per;
+   /* Idle task(s) total runtime per time_slice */
+   uint32_t idle_total_runtime;
+   /* Os total runtime per time_slice */
+   uint32_t os_total_runtime;
 
    /* Calculate separately Idle task(s) total runtime */
-   idleTotalRuntime = nrf_perf_get_idle_runtime();
+   idle_total_runtime = nrf_perf_get_idle_runtime();
 
    /* Calculate total runtime across all Tasks (Threads) running in the system, except Idle task */
-   systemTotalRuntime = nrf_perf_get_system_runtime() - idleTotalRuntime;
+   system_total_runtime = nrf_perf_get_system_runtime() - idle_total_runtime;
 
    /* Calculate RTOS's resources total runtime */
-   osTotalRuntime = (*timeslice) - (systemTotalRuntime + idleTotalRuntime);
+   os_total_runtime = (*time_slice) - (system_total_runtime + idle_total_runtime);
 
    /* Calculate percentages */
-   idleTimePercent = (uint8_t)GET_CPU_PERCENT((*timeslice), idleTotalRuntime);
-   cpuLoadPercent = (uint8_t)GET_CPU_PERCENT((*timeslice), systemTotalRuntime);
-   osTimePercent = (uint8_t)GET_CPU_PERCENT((*timeslice), osTotalRuntime);
+   idle_time_per = (uint8_t)GET_CPU_PERCENT((*time_slice), idle_total_runtime);
+   cpu_load_per = (uint8_t)GET_CPU_PERCENT((*time_slice), system_total_runtime);
+   os_per = (uint8_t)GET_CPU_PERCENT((*time_slice), os_total_runtime);
 
-   SP_TRACE_INFO("# ################# CPU LOAD %d%% ### IDLE %d%% ### KERNEL %d%% ################## #\n", cpuLoadPercent, idleTimePercent, osTimePercent);
+   NP_TRACE_INFO("# ################# CPU LOAD %d%% ### IDLE %d%% ### KERNEL %d%% ################## #\n", cpu_load_per, idle_time_per, os_per);
 }
 
-SPK_LOCAL_INLINE void nrf_perf_update_task_statistic(uint8_t taskIterator, uint32_t timestamp, uint32_t taskRuntime)
+NP_LOCAL_INLINE void nrf_perf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp, uint32_t task_runtime)
 {
-   sp_TaskRuntime *taskPtr = &Hook_TasksStatistics[taskIterator];
+   np_task_runtime *task_ptr = &hook_tasks_statistics[task_iterator];
 
-   if (taskRuntime > taskPtr->maxRuntime)
+   if (task_runtime > task_ptr->max_runtime)
    {
-      taskPtr->maxRuntime = taskRuntime;
+      task_ptr->max_runtime = task_runtime;
    }
 
-   taskPtr->taskTimestamp = timestamp;
-   taskPtr->totalRuntime += taskRuntime;
-   taskPtr->taskSwitches++;
+   task_ptr->task_timestamp = timestamp;
+   task_ptr->total_runtime += task_runtime;
+   task_ptr->task_switches++;
 
-   nrf_perf_update_uptime_statistic(taskIterator, taskRuntime, taskPtr);
+   nrf_perf_update_uptime_statistic(task_iterator, task_runtime, task_ptr);
 }
 
-SPK_LOCAL_INLINE void nrf_perf_update_idle_statistic(uint32_t timestamp)
+NP_LOCAL_INLINE void nrf_perf_update_idle_statistic(uint32_t timestamp)
 {
-   uint32_t idleRuntime;
-   idleRuntime = nrf_perf_get_task_runtime(Idle_TaskIterator, timestamp);
-   nrf_perf_update_task_statistic(Idle_TaskIterator, timestamp, idleRuntime);
+   uint32_t idle_runtime = nrf_perf_get_task_runtime(idle_task_iterator, timestamp);
+   nrf_perf_update_task_statistic(idle_task_iterator, timestamp, idle_runtime);
 }
 
-SPK_LOCAL_INLINE void nrf_perf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp, uint32_t isrRuntime)
+NP_LOCAL_INLINE void nrf_perf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp, uint32_t isrRuntime)
 {
 
 }
 
-SPK_LOCAL_INLINE void nrf_perf_update_uptime_statistic(uint8_t taskIterator, uint32_t taskRuntime, sp_TaskRuntime *taskPtr)
+NP_LOCAL_INLINE void nrf_perf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime, np_task_runtime *task_ptr)
 {
-   Hook_UptimeStatistic.TasksRuntime[taskIterator] += taskRuntime;
-   Hook_UptimeStatistic.MaxTasksRuntime[taskIterator] = taskPtr->maxRuntime;
-   Hook_UptimeStatistic.TasksSwitches[taskIterator] += taskPtr->taskSwitches;
+   hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
+   hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_ptr->max_runtime;
+   hook_uptime_statistic.tasks_switches[task_iterator] += task_ptr->task_switches;
 }
 
-SPK_LOCAL void nrf_perf_isr_lock(unsigned int *key)
+NP_LOCAL void nrf_perf_isr_lock(unsigned int *key)
 {
-   *key = SP_ISR_LOCK();
+   *key = NP_ISR_LOCK();
 }
 
-SPK_LOCAL void nrf_perf_isr_unlock(unsigned int key)
+NP_LOCAL void nrf_perf_isr_unlock(unsigned int key)
 {
-   SP_ISR_UNLOCK(key);
+   NP_ISR_UNLOCK(key);
 }
 
-SPK_LOCAL void nrf_perf_trace_uptime_statistic(void)
+NP_LOCAL void nrf_perf_trace_uptime_statistic(void)
 {
    // TODO: same for nrf_perf_trace_cycle_statistic
 }
 
-SPK_LOCAL void nrf_perf_cycle_backup(void)
+NP_LOCAL void nrf_perf_cycle_backup(void)
 {
    unsigned int key;
    nrf_perf_isr_lock(&key);
-   memcpy(&TraceCycle_TasksStatistics, &Hook_TasksStatistics, sizeof(Hook_TasksStatistics));
-   memcpy(&TraceCycle_UptimeStatistic, &Hook_UptimeStatistic, sizeof(Hook_UptimeStatistic));
+   memcpy(&window_tasks_statistic, &hook_tasks_statistics, sizeof(hook_tasks_statistics));
+   memcpy(&window_uptime_statistic, &hook_uptime_statistic, sizeof(hook_uptime_statistic));
    nrf_perf_isr_unlock(key);
 }
 
-SPK_LOCAL void nrf_perf_trace_cycle_statistic(uint32_t *timeslice)
+NP_LOCAL void nrf_perf_trace_cycle_statistic(uint32_t *time_slice)
 {
-   SP_TRACE_INFO("# #####################   1 Second System Performance   ###################### #");
-   SP_TRACE_INFO("#                                                                              #");
-   SP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
+   NP_TRACE_INFO("# #####################   1 Second System Performance   ###################### #");
+   NP_TRACE_INFO("#                                                                              #");
+   NP_TRACE_INFO("#   Task Id         Total runtime         Max runtime        Total Switches    #");
 
    // TODO: add support of formatting names using k_thread_name_get((k_tid_t)thread);
-   for (uint8_t taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
+   for (uint8_t task_iterator = 0; task_iterator < NP_TASK_COUNT; task_iterator++)
    {
-      SP_TRACE_INFO("%s %6u %22u %19u %17u %10s",
-                    "#", taskIterator, TraceCycle_TasksStatistics[taskIterator].totalRuntime,
-                    TraceCycle_TasksStatistics[taskIterator].maxRuntime, TraceCycle_TasksStatistics[taskIterator].taskSwitches, "#");
+      NP_TRACE_INFO("%s %6u %22u %19u %17u %10s",
+                    "#", task_iterator, window_tasks_statistic[task_iterator].total_runtime,
+                    window_tasks_statistic[task_iterator].max_runtime, window_tasks_statistic[task_iterator].task_switches, "#");
    }
-   SP_TRACE_INFO("# ############################################################################ #");
-   SP_TRACE_INFO("# ### Calculations Timeslice: %u\n", (*timeslice));
+   NP_TRACE_INFO("# ############################################################################ #");
+   NP_TRACE_INFO("# ### Calculations Timeslice: %u\n", (*time_slice));
 }
 
-SPK_LOCAL void nrf_perf_reset_runtime_statistic(void)
+NP_LOCAL void nrf_perf_reset_runtime_statistic(void)
 {
-   for (uint8_t taskIterator = 0; taskIterator < SP_TASK_COUNT; taskIterator++)
+   for (uint8_t task_iterator = 0; task_iterator < NP_TASK_COUNT; task_iterator++)
    {
-      nrf_perf_reset_trace_cycle_statistic(taskIterator);
-      nrf_perf_reset_hooks_statistic(taskIterator);
+      nrf_perf_reset_trace_cycle_statistic(task_iterator);
+      nrf_perf_reset_hooks_statistic(task_iterator);
    }
 }
 
-SPK_LOCAL_INLINE void nrf_perf_reset_trace_cycle_statistic(uint8_t taskIterator)
+NP_LOCAL_INLINE void nrf_perf_reset_trace_cycle_statistic(uint8_t task_iterator)
 {
-   TraceCycle_TasksStatistics[taskIterator].maxRuntime = 0u;
-   TraceCycle_TasksStatistics[taskIterator].maxRuntime = 0u;
-   TraceCycle_TasksStatistics[taskIterator].taskSwitches = 0u;
-   TraceCycle_TasksStatistics[taskIterator].totalRuntime = 0u;
+   window_tasks_statistic[task_iterator].max_runtime = 0u;
+   window_tasks_statistic[task_iterator].max_runtime = 0u;
+   window_tasks_statistic[task_iterator].task_switches = 0u;
+   window_tasks_statistic[task_iterator].total_runtime = 0u;
 }
 
-SPK_LOCAL_INLINE void nrf_perf_reset_hooks_statistic(uint8_t taskIterator)
+NP_LOCAL_INLINE void nrf_perf_reset_hooks_statistic(uint8_t task_iterator)
 {
-   Hook_TasksStatistics[taskIterator].maxRuntime = 0u;
-   Hook_TasksStatistics[taskIterator].maxRuntime = 0u;
-   Hook_TasksStatistics[taskIterator].taskSwitches = 0u;
-   Hook_TasksStatistics[taskIterator].totalRuntime = 0u;
+   hook_tasks_statistics[task_iterator].max_runtime = 0u;
+   hook_tasks_statistics[task_iterator].max_runtime = 0u;
+   hook_tasks_statistics[task_iterator].task_switches = 0u;
+   hook_tasks_statistics[task_iterator].total_runtime = 0u;
 }
 
-SPK_LOCAL uint32_t nrf_perf_get_task_runtime(uint8_t taskIterator, uint32_t timeStamp)
+NP_LOCAL uint32_t nrf_perf_get_task_runtime(uint8_t task_iterator, uint32_t timestamp)
 {
-   uint32_t taskRuntime;
-   uint32_t prevTaskTimeStamp;
-   prevTaskTimeStamp = Hook_TasksStatistics[taskIterator].taskTimestamp;
-   taskRuntime = nrf_perf_get_timestamp_delta(prevTaskTimeStamp, timeStamp);
-   return taskRuntime;
+   uint32_t prev_timestamp = hook_tasks_statistics[task_iterator].task_timestamp;
+   uint32_t task_runtime = nrf_perf_get_timestamp_delta(prev_timestamp, timestamp);
+   return task_runtime;
 }

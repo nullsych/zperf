@@ -193,9 +193,10 @@ Run the Zephyr build container and mount your project directory:
 
 ```bash
 docker run --rm -it \
-  -v $(pwd):/workdir \
-  -w /workdir \
-  zephyrprojectrtos/zephyr-build:latest
+    --user root \
+    -v (pwd):/workdir \
+    -w /workdir \
+    zephyrprojectrtos/zephyr-build:latest
 ```
 
 This will start an interactive shell inside a fully configured Zephyr build environment.
@@ -205,11 +206,35 @@ This will start an interactive shell inside a fully configured Zephyr build envi
 If this is a fresh workspace, run in root of the Docker:
 
 ```
-mkdir zephyr-workspace
+cd /
+sudo mkdir zephyr-workspace
 cd zephyr-workspace
 west init .
 west update
 west zephyr-export
+```
+
+#### Saving the initialized workspace (optional)
+
+The initialization step (`west init`, `west update`) may take some time. If you plan to reuse the same environment frequently, you can save the container state as a custom image.
+
+First, open another terminal and find the running container:
+
+```sh
+docker ps
+```
+
+E.g.:
+
+``` sh
+CONTAINER ID   IMAGE                                   COMMAND                  CREATED         STATUS         PORTS      NAMES
+f4229357be37   zephyrprojectrtos/zephyr-build:latest   "/home/entrypoint.sh…"   2 minutes ago   Up 2 minutes   5900/tcp   flamboyant_morse
+```
+
+And commit your Zephyr container:
+
+```
+docker commit f4229357be37 my-zephyr-build-env
 ```
 
 ### Step 3: Build the application

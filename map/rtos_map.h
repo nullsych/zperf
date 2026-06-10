@@ -51,7 +51,7 @@
 #define MAP_RTOS_USER_TASKS_COUNT                   (3U)
 #endif
 
-#if (SP_CFG_RTOS_HAS_SYSTEM_TASKS == SP_CFG_ON)
+#if (NP_CFG_RTOS_HAS_SYSTEM_TASKS == NP_CFG_ON)
 /** @brief Zephyr RTOS, like many other RTOSs, has an implicit task creation mechanism.
  *         That means, unfortunately you are not be able to determine all threads
  *         (e.g. system threads) at compile time, because it's created inside RTOS sources.

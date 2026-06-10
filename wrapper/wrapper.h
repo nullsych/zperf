@@ -11,6 +11,6 @@
 
 #include "nrf_perf_rtos_wrapper.h"
 
-RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void);
+NP_RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void);
 
 #endif /* NRF_PERF_WRAPPER_H */

@@ -30,9 +30,9 @@ LOG_MODULE_REGISTER(nrf_perf_zephyr_wrapper, LOG_LEVEL_DBG);
 ********************************************************************************************************************/
 
 /**
- * @brief Get unique taskId (zephyr thread ID) of the current Task (Thread).
+ * @brief Get unique task_id (zephyr thread ID) of the current Task (Thread).
  */
-RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void)
+NP_RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void)
 {
    /**
     * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be incorrect.
@@ -41,59 +41,59 @@ RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void)
 }
 
 /**
- * @brief Get task iterator (nrf_perf specific) based on taskId (zephyr thread ID).
+ * @brief Get task iterator (nrf_perf specific) based on task_id (zephyr thread ID).
  */
-RTOS_WRAPPER uint8_t nrf_perf_get_task_iterator(uint32_t taskId)
+NP_RTOS_WRAPPER uint8_t nrf_perf_get_task_iterator(uint32_t task_id)
 {
-   k_tid_t id = (k_tid_t)(taskId);
+   k_tid_t id = (k_tid_t)(task_id);
    return (uint8_t)(uintptr_t)id->custom_data;
 }
 
 /**
- * @brief Get task name based on taskId (zephyr thread ID).
+ * @brief Get task name based on task_id (zephyr thread ID).
  */
-RTOS_WRAPPER const char* nrf_perf_get_task_name(uint32_t taskId)
+NP_RTOS_WRAPPER const char* nrf_perf_get_task_name(uint32_t task_id)
 {
-   return k_thread_name_get((k_tid_t)taskId);
+   return k_thread_name_get((k_tid_t)task_id);
 }
 
 /**
  * @brief Get unique ID of the current ISR.
  */
-RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void)
+NP_RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void)
 {
-   return k_is_in_isr() ? SP_ISR_ID_SIGN : 0U;
+   return k_is_in_isr() ? NP_ISR_ID_SIGN : 0U;
 }
 
-RTOS_WRAPPER void nrf_perf_enumerate_callback(sp_TaskPtr thread, void *user_data)
+NP_RTOS_WRAPPER void nrf_perf_enumerate_callback(np_task_ptr thread, void *user_data)
 {
-   static uint8_t taskIterator = 0;
+   static uint8_t task_iterator = 0;
 
    ARG_UNUSED(user_data);
 
    /* Here k_thread_custom_data_set() is not used cause id doesn't allowed to write it during k_thread_foreach */
-   // k_thread_custom_data_set((void *)(uintptr_t)taskIterator);
+   // k_thread_custom_data_set((void *)(uintptr_t)task_iterator);
 
    /* Instead of this we use also not the best option by casting away a const qualification on thread object of pointer type. */
    k_tid_t mod_thread = (k_tid_t)(thread);
 
-   /* And assign a taskIterator to it*/
-   mod_thread->custom_data = (void *)(uintptr_t)taskIterator;
+   /* And assign a task_iterator to it*/
+   mod_thread->custom_data = (void *)(uintptr_t)task_iterator;
 
    /* Print config data */
-   SP_TRACE_INFO("Iterating %d thread in the system. Thread data: ", (uint8_t)(uintptr_t)mod_thread->custom_data);
-   SP_TRACE_INFO("      Name        : %s", mod_thread->name);
-   SP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
-   SP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
-   SP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
+   NP_TRACE_INFO("Iterating %d thread in the system. Thread data: ", (uint8_t)(uintptr_t)mod_thread->custom_data);
+   NP_TRACE_INFO("      Name        : %s", mod_thread->name);
+   NP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
+   NP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
+   NP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
 
-   taskIterator++;
+   task_iterator++;
 }
 
 /**
  * @brief Saves RTU's (Runtime Unit, Tasks/ISRs) configuration.
  */
-RTOS_WRAPPER void nrf_perf_init_configuration(void)
+NP_RTOS_WRAPPER void nrf_perf_init_configuration(void)
 {
    /**
     * @note Assign pointer to the local callback function to save cfg
@@ -101,10 +101,10 @@ RTOS_WRAPPER void nrf_perf_init_configuration(void)
    k_thread_foreach(nrf_perf_enumerate_callback, NULL);
 }
 
-RTOS_WRAPPER uint32_t nrf_perf_get_uptime_timestamp(void)
+NP_RTOS_WRAPPER uint32_t nrf_perf_get_uptime_timestamp(void)
 {
-   uint32_t timeStamp;
-   timeStamp = k_uptime_ticks();
-   timeStamp = k_ticks_to_us_near32(timeStamp);
-   return timeStamp; /* in uS */
+   uint32_t timestamp;
+   timestamp = k_uptime_ticks();
+   timestamp = k_ticks_to_us_near32(timestamp);
+   return timestamp; /* in uS */
 }
