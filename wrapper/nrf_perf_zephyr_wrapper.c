@@ -1,5 +1,5 @@
 /**
- * @file   nrf_perf_zephyr_wrapper.c
+ * @file   nrf_perf_startup.c
  * @brief  Implementation of wrappers that encapsulate Zephyr-specific API.
  * @author nullsych
  * @date   Jul 18, 2024
@@ -24,7 +24,7 @@
 #include "wrapper.h"
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(nrf_perf_zephyr_wrapper, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(nrf_perf_startup, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
 *                                            WRAPPER API IMPLEMENTATION                                            *

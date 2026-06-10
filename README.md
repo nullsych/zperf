@@ -58,51 +58,51 @@ At the start of the device the tool used inner `k_thread_foreach()` Zephyr featu
 ```
 Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
 [00:00:00.396,911] <inf> main: Perform post-scheduler initializations for nrf_perf
-[00:00:00.396,911] <inf> nrf_perf_zephyr_wrapper: Iterating 0 thread in the system. Thread data: 
-[00:00:00.396,972] <inf> nrf_perf_zephyr_wrapper:       Name        : Task_NrfPerf
-[00:00:00.396,972] <inf> nrf_perf_zephyr_wrapper:       Priority    : 5
-[00:00:00.396,972] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1024
-[00:00:00.397,003] <inf> nrf_perf_zephyr_wrapper:       Custom data : 0
-[00:00:00.397,003] <inf> nrf_perf_zephyr_wrapper: Iterating 1 thread in the system. Thread data: 
-[00:00:00.397,033] <inf> nrf_perf_zephyr_wrapper:       Name        : Task_LED
-[00:00:00.397,033] <inf> nrf_perf_zephyr_wrapper:       Priority    : 7
-[00:00:00.397,033] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1024
-[00:00:00.397,064] <inf> nrf_perf_zephyr_wrapper:       Custom data : 1
-[00:00:00.397,064] <inf> nrf_perf_zephyr_wrapper: Iterating 2 thread in the system. Thread data: 
-[00:00:00.397,094] <inf> nrf_perf_zephyr_wrapper:       Name        : Task_BLE
-[00:00:00.397,094] <inf> nrf_perf_zephyr_wrapper:       Priority    : 3
-[00:00:00.397,125] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 2048
-[00:00:00.397,125] <inf> nrf_perf_zephyr_wrapper:       Custom data : 2
-[00:00:00.397,125] <inf> nrf_perf_zephyr_wrapper: Iterating 3 thread in the system. Thread data: 
-[00:00:00.397,155] <inf> nrf_perf_zephyr_wrapper:       Name        : bt_tx_processor
-[00:00:00.397,186] <inf> nrf_perf_zephyr_wrapper:       Priority    : -1
-[00:00:00.397,186] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1024
-[00:00:00.397,186] <inf> nrf_perf_zephyr_wrapper:       Custom data : 3
-[00:00:00.397,216] <inf> nrf_perf_zephyr_wrapper: Iterating 4 thread in the system. Thread data: 
-[00:00:00.397,247] <inf> nrf_perf_zephyr_wrapper:       Name        : BT LW WQ
-[00:00:00.397,247] <inf> nrf_perf_zephyr_wrapper:       Priority    : 10
-[00:00:00.397,247] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1408
-[00:00:00.397,277] <inf> nrf_perf_zephyr_wrapper:       Custom data : 4
-[00:00:00.397,277] <inf> nrf_perf_zephyr_wrapper: Iterating 5 thread in the system. Thread data: 
-[00:00:00.397,308] <inf> nrf_perf_zephyr_wrapper:       Name        : sysworkq
-[00:00:00.397,308] <inf> nrf_perf_zephyr_wrapper:       Priority    : -1
-[00:00:00.397,308] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1024
-[00:00:00.397,338] <inf> nrf_perf_zephyr_wrapper:       Custom data : 5
-[00:00:00.397,338] <inf> nrf_perf_zephyr_wrapper: Iterating 6 thread in the system. Thread data: 
-[00:00:00.397,369] <inf> nrf_perf_zephyr_wrapper:       Name        : logging
-[00:00:00.397,369] <inf> nrf_perf_zephyr_wrapper:       Priority    : 14
-[00:00:00.397,399] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 768
-[00:00:00.397,399] <inf> nrf_perf_zephyr_wrapper:       Custom data : 6
-[00:00:00.397,399] <inf> nrf_perf_zephyr_wrapper: Iterating 7 thread in the system. Thread data: 
-[00:00:00.397,430] <inf> nrf_perf_zephyr_wrapper:       Name        : idle
-[00:00:00.397,460] <inf> nrf_perf_zephyr_wrapper:       Priority    : 15
-[00:00:00.397,460] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 320
-[00:00:00.397,460] <inf> nrf_perf_zephyr_wrapper:       Custom data : 7
-[00:00:00.397,491] <inf> nrf_perf_zephyr_wrapper: Iterating 8 thread in the system. Thread data: 
-[00:00:00.397,521] <inf> nrf_perf_zephyr_wrapper:       Name        : main
-[00:00:00.397,521] <inf> nrf_perf_zephyr_wrapper:       Priority    : 0
-[00:00:00.397,521] <inf> nrf_perf_zephyr_wrapper:       Stack size  : 1024
-[00:00:00.397,521] <inf> nrf_perf_zephyr_wrapper:       Custom data : 8
+[00:00:00.396,911] <inf> nrf_perf_startup: Iterating 0 thread in the system. Thread data: 
+[00:00:00.396,972] <inf> nrf_perf_startup:       Name        : Task_NrfPerf
+[00:00:00.396,972] <inf> nrf_perf_startup:       Priority    : 5
+[00:00:00.396,972] <inf> nrf_perf_startup:       Stack size  : 1024
+[00:00:00.397,003] <inf> nrf_perf_startup:       Custom data : 0
+[00:00:00.397,003] <inf> nrf_perf_startup: Iterating 1 thread in the system. Thread data: 
+[00:00:00.397,033] <inf> nrf_perf_startup:       Name        : Task_LED
+[00:00:00.397,033] <inf> nrf_perf_startup:       Priority    : 7
+[00:00:00.397,033] <inf> nrf_perf_startup:       Stack size  : 1024
+[00:00:00.397,064] <inf> nrf_perf_startup:       Custom data : 1
+[00:00:00.397,064] <inf> nrf_perf_startup: Iterating 2 thread in the system. Thread data: 
+[00:00:00.397,094] <inf> nrf_perf_startup:       Name        : Task_BLE
+[00:00:00.397,094] <inf> nrf_perf_startup:       Priority    : 3
+[00:00:00.397,125] <inf> nrf_perf_startup:       Stack size  : 2048
+[00:00:00.397,125] <inf> nrf_perf_startup:       Custom data : 2
+[00:00:00.397,125] <inf> nrf_perf_startup: Iterating 3 thread in the system. Thread data: 
+[00:00:00.397,155] <inf> nrf_perf_startup:       Name        : bt_tx_processor
+[00:00:00.397,186] <inf> nrf_perf_startup:       Priority    : -1
+[00:00:00.397,186] <inf> nrf_perf_startup:       Stack size  : 1024
+[00:00:00.397,186] <inf> nrf_perf_startup:       Custom data : 3
+[00:00:00.397,216] <inf> nrf_perf_startup: Iterating 4 thread in the system. Thread data: 
+[00:00:00.397,247] <inf> nrf_perf_startup:       Name        : BT LW WQ
+[00:00:00.397,247] <inf> nrf_perf_startup:       Priority    : 10
+[00:00:00.397,247] <inf> nrf_perf_startup:       Stack size  : 1408
+[00:00:00.397,277] <inf> nrf_perf_startup:       Custom data : 4
+[00:00:00.397,277] <inf> nrf_perf_startup: Iterating 5 thread in the system. Thread data: 
+[00:00:00.397,308] <inf> nrf_perf_startup:       Name        : sysworkq
+[00:00:00.397,308] <inf> nrf_perf_startup:       Priority    : -1
+[00:00:00.397,308] <inf> nrf_perf_startup:       Stack size  : 1024
+[00:00:00.397,338] <inf> nrf_perf_startup:       Custom data : 5
+[00:00:00.397,338] <inf> nrf_perf_startup: Iterating 6 thread in the system. Thread data: 
+[00:00:00.397,369] <inf> nrf_perf_startup:       Name        : logging
+[00:00:00.397,369] <inf> nrf_perf_startup:       Priority    : 14
+[00:00:00.397,399] <inf> nrf_perf_startup:       Stack size  : 768
+[00:00:00.397,399] <inf> nrf_perf_startup:       Custom data : 6
+[00:00:00.397,399] <inf> nrf_perf_startup: Iterating 7 thread in the system. Thread data: 
+[00:00:00.397,430] <inf> nrf_perf_startup:       Name        : idle
+[00:00:00.397,460] <inf> nrf_perf_startup:       Priority    : 15
+[00:00:00.397,460] <inf> nrf_perf_startup:       Stack size  : 320
+[00:00:00.397,460] <inf> nrf_perf_startup:       Custom data : 7
+[00:00:00.397,491] <inf> nrf_perf_startup: Iterating 8 thread in the system. Thread data: 
+[00:00:00.397,521] <inf> nrf_perf_startup:       Name        : main
+[00:00:00.397,521] <inf> nrf_perf_startup:       Priority    : 0
+[00:00:00.397,521] <inf> nrf_perf_startup:       Stack size  : 1024
+[00:00:00.397,521] <inf> nrf_perf_startup:       Custom data : 8
 ```
 
 We use `Custom data` for assigning a task-iterator to track the Task later.
