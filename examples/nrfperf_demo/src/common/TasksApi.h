@@ -12,7 +12,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/types.h>
 
-#define TASK_LOCAL          static
+#define TASK_LOCAL static
 #define TASK_ENTRY_POINT
 
 void Led_createTask(void);
@@ -38,7 +38,7 @@ static const char *now_str(void)
     h = now;
 
     snprintf(buf, sizeof(buf), "%u:%02u:%02u.%03u",
-         h, min, s, ms);
+	 h, min, s, ms);
     return buf;
 }
 */

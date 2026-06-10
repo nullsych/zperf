@@ -9,11 +9,10 @@
 #ifndef PWR_MGT_H
 #define PWR_MGT_H
 
-#define PM_LOCAL                static
-#define PM_LOCAL_INLINE         static inline
+#define PM_LOCAL        static
+#define PM_LOCAL_INLINE static inline
 
-typedef struct
-{
+typedef struct {
 	uint8_t entryCounter;
 	uint8_t exitCounter;
 } pm_counters_t;

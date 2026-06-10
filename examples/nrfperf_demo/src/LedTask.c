@@ -19,16 +19,15 @@ LOG_MODULE_REGISTER(LedTask, LOG_LEVEL_DBG);
 
 TASK_LOCAL TASK_ENTRY_POINT void Task_LED_entry(void)
 {
-   Leds_init();
+	Leds_init();
 
-   for (;;)
-   {
-      Leds_toggleLeds(LED_TASK_PERIOD);
-   }
+	for (;;) {
+		Leds_toggleLeds(LED_TASK_PERIOD);
+	}
 }
 
 /* Define the thread using a macro */
-K_THREAD_DEFINE(Task_LED, LED_TASK_STACKSIZE, Task_LED_entry, NULL, NULL, NULL,
-                LED_TASK_PRIORITY, 0, 0);
+K_THREAD_DEFINE(Task_LED, LED_TASK_STACKSIZE, Task_LED_entry, NULL, NULL, NULL, LED_TASK_PRIORITY,
+		0, 0);
 
 /* EOF */

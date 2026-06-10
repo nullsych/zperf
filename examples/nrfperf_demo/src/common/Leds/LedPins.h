@@ -15,21 +15,21 @@
 #include <zephyr/drivers/gpio.h>
 
 /* Number of connected leds */
-#define LEDS_NUMBER             (1U)
+#define LEDS_NUMBER (1U)
 
-#define LED_ON                  (true)
-#define LED_OFF                 (false)
+#define LED_ON  (true)
+#define LED_OFF (false)
 
 /* The devicetree node identifier for the "led0" */
-#define LED_PIN_0_NODE          DT_ALIAS(led0)
+#define LED_PIN_0_NODE DT_ALIAS(led0)
 
 /* The devicetree node identifier for the "led1" */
-#define LED_PIN_1_NODE          DT_ALIAS(led1)
+#define LED_PIN_1_NODE DT_ALIAS(led1)
 
 /* The devicetree node identifier for the "led2" */
-#define LED_PIN_2_NODE          DT_ALIAS(led2)
+#define LED_PIN_2_NODE DT_ALIAS(led2)
 
 /* The devicetree node identifier for the "led3" */
-#define LED_PIN_3_NODE          DT_ALIAS(led3)
+#define LED_PIN_3_NODE DT_ALIAS(led3)
 
 #endif /* SRC_COMMON_LEDS_LED_PINS_H */

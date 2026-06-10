@@ -12,7 +12,7 @@
  * }
  *
  */
-
+/* clang-format off */
 #ifndef NRF_PERF_RTOS_SYSTEM_HOOKS_H
 #define NRF_PERF_RTOS_SYSTEM_HOOKS_H
 
@@ -32,3 +32,4 @@ void sys_trace_isr_exit_user(void);
 void sys_trace_idle_user(void);
 
 #endif /* NRF_PERF_RTOS_SYSTEM_HOOKS_H */
+/* clang-format on */

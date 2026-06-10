@@ -16,16 +16,14 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(NrfPerfTask, LOG_LEVEL_DBG);
 
-
 TASK_LOCAL TASK_ENTRY_POINT void task_nrf_perf_entry(void)
 {
-    for (;;)
-    {
-        nrf_perf_runtime_overall_statistic();
-        k_msleep(NRF_PERF_TASK_PERIOD);
-    }
+	for (;;) {
+		nrf_perf_runtime_overall_statistic();
+		k_msleep(NRF_PERF_TASK_PERIOD);
+	}
 }
 
 /* Define the thread using a macro */
 K_THREAD_DEFINE(Task_NrfPerf, NRF_PERF_TASK_STACKSIZE, task_nrf_perf_entry, NULL, NULL, NULL,
-                NRF_PERF_TASK_PRIORITY, 0, 0);
+		NRF_PERF_TASK_PRIORITY, 0, 0);

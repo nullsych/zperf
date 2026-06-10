@@ -11,45 +11,45 @@
 
 void sys_trace_thread_abort_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_suspend_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_resume_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_name_set_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_info_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_sched_ready_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_pend_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_priority_set_user(struct k_thread *thread, int prio)
 {
-   /* code */
+	/* code */
 }
 
 void sys_trace_thread_create_user(struct k_thread *thread)
 {
-   /* code */
+	/* code */
 }

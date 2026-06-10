@@ -15,24 +15,23 @@
 #include "nrf_perf_keywords.h"
 
 /*******************************************************************************************************************
-*                                                   MACROS                                                         *
-*******************************************************************************************************************/
-#define NP_ISR_LOCK                         MAP_RTOS_ISR_LOCK
-#define NP_ISR_UNLOCK                       MAP_RTOS_ISR_UNLOCK
+ *                                                   MACROS                                                         *
+ *******************************************************************************************************************/
+#define NP_ISR_LOCK   MAP_RTOS_ISR_LOCK
+#define NP_ISR_UNLOCK MAP_RTOS_ISR_UNLOCK
 
-#define NP_TRACE_INFO                       MAP_RTOS_TRACE_INFO
-#define NP_TRACE_WARN                       MAP_RTOS_TRACE_WARN
-#define NP_TRACE_ERRO                       MAP_RTOS_TRACE_ERRO
+#define NP_TRACE_INFO MAP_RTOS_TRACE_INFO
+#define NP_TRACE_WARN MAP_RTOS_TRACE_WARN
+#define NP_TRACE_ERRO MAP_RTOS_TRACE_ERRO
 
-#define NP_ISR_ID_SIGN                      (0xFFFC)                                      /* Common ISR signature */
+#define NP_ISR_ID_SIGN (0xFFFC) /* Common ISR signature */
 
-#define TASK_IS_VALID(task_iterator)         ((task_iterator < NP_TASK_COUNT) && (task_iterator >= 0))
+#define TASK_IS_VALID(task_iterator)          ((task_iterator < NP_TASK_COUNT) && (task_iterator >= 0))
 #define GET_CPU_PERCENT(time_slice, total_rt) ((total_rt * 100U) / time_slice)
 
-
 /*******************************************************************************************************************
-*                                            nrf_perf GLOBAL API                                                    *
-*******************************************************************************************************************/
+ *                                            nrf_perf GLOBAL API                                                    *
+ *******************************************************************************************************************/
 /* Hooks Declarations for RTOS-only usage */
 NP_RTOS_CALLED void nrf_perf_pre_task_hook(void);
 NP_RTOS_CALLED void nrf_perf_post_task_hook(void);

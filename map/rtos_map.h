@@ -6,6 +6,7 @@
  *
  */
 
+/* clang-format off */
 #ifndef NRF_PERF_RTOS_MAP_H
 #define NRF_PERF_RTOS_MAP_H
 
@@ -115,3 +116,4 @@
 #define MAP_RTOS_UNIQ_ID                            uint32_t
 
 #endif /* NRF_PERF_RTOS_MAP_H */
+/* clang-format on */

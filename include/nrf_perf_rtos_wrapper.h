@@ -9,24 +9,26 @@
 #ifndef NRF_PERF_RTOS_WRAPPER_H
 #define NRF_PERF_RTOS_WRAPPER_H
 
+/* clang-format off */
 /*******************************************************************************************************************
  *                                                STD HEADERS                                                      *
  *******************************************************************************************************************/
 #include <stdint.h>
 
 /*******************************************************************************************************************
- *                                                nrf_perf HEADERS                                                  *
+ *                                                  HEADERS                                                        *
  *******************************************************************************************************************/
 #include "nrf_perf_keywords.h"
 
 /*******************************************************************************************************************
-*                                        GLOBAL API DECLARATION                                                    *
-*******************************************************************************************************************/
+ *                                        GLOBAL API DECLARATION                                                    *
+ *******************************************************************************************************************/
+/* clang-format on */
 
-extern NP_RTOS_WRAPPER  uint32_t           nrf_perf_get_task_id(void);
-extern NP_RTOS_WRAPPER  void               nrf_perf_init_configuration(void);
-extern NP_RTOS_WRAPPER  uint8_t            nrf_perf_get_task_iterator(uint32_t);
-extern NP_RTOS_WRAPPER  const char*        nrf_perf_get_task_name(uint32_t);
-extern NP_RTOS_WRAPPER  uint32_t           nrf_perf_get_uptime_timestamp(void);
+extern NP_RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void);
+extern NP_RTOS_WRAPPER void nrf_perf_init_configuration(void);
+extern NP_RTOS_WRAPPER uint8_t nrf_perf_get_task_iterator(uint32_t);
+extern NP_RTOS_WRAPPER const char *nrf_perf_get_task_name(uint32_t);
+extern NP_RTOS_WRAPPER uint32_t nrf_perf_get_uptime_timestamp(void);
 
 #endif /* NRF_PERF_RTOS_WRAPPER_H */
