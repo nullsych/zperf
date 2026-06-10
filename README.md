@@ -9,22 +9,22 @@ In addition, it counts context switches per task (`Total Switches`) to reflect s
 ⚡️ The result is a simple and precise runtime profiling tool that helps analyze scheduling efficiency, task behavior, and overall system utilization on embedded device:
 
 ```
-[00:01:57.335,083] <inf> nrf_perf: # #####################   1 Second System Performance   ###################### #
-[00:01:57.335,083] <inf> nrf_perf: #                                                                              #
-[00:01:57.335,113] <inf> nrf_perf: #   Task Id         Total runtime         Max runtime        Total Switches    #
-[00:01:57.335,144] <inf> nrf_perf: #      0                    458                 458                 1          #
-[00:01:57.335,174] <inf> nrf_perf: #      1                     61                  61                 4          #
-[00:01:57.335,205] <inf> nrf_perf: #      2                    154                  61                 4          #
-[00:01:57.335,266] <inf> nrf_perf: #      3                      0                   0                 0          #
-[00:01:57.335,296] <inf> nrf_perf: #      4                      0                   0                 0          #
-[00:01:57.335,327] <inf> nrf_perf: #      5                      0                   0                 0          #
-[00:01:57.335,357] <inf> nrf_perf: #      6                 162598              144135                 3          #
-[00:01:57.335,418] <inf> nrf_perf: #      7                 836944              107727                27          #
-[00:01:57.335,449] <inf> nrf_perf: #      8                      0                   0                 0          #
-[00:01:57.335,449] <inf> nrf_perf: # ############################################################################ #
-[00:01:57.335,479] <inf> nrf_perf: # ### Calculations Timeslice: 1000549
+# #####################   1 Second System Performance   ###################### #
+#                                                                              #
+#   Task Id         Total runtime         Max runtime        Total Switches    #
+#      0                    458                 458                 1          #
+#      1                     61                  61                 4          #
+#      2                    154                  61                 4          #
+#      3                      0                   0                 0          #
+#      4                      0                   0                 0          #
+#      5                      0                   0                 0          #
+#      6                 162598              144135                 3          #
+#      7                 836944              107727                27          #
+#      8                      0                   0                 0          #
+# ############################################################################ #
+# ### Calculations Timeslice: 1000549
 
-[00:01:57.335,479] <inf> nrf_perf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
+# ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 ```
 
 ## Design Philosophy
