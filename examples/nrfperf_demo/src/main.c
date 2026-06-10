@@ -14,10 +14,10 @@
 #include "common/TasksCfg.h"
 #include "common/TasksApi.h"
 
-/* nrf_perf's global API */
+/* Tool global API */
 #include <nrf_perf.h>
 
-/* Rest of Zephyr hooks */
+/* Rest of unmapped Zephyr hooks */
 #include "RTOSHooks.h"
 
 /* Power Management */
@@ -28,13 +28,11 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 int main(void)
 {
-	LOG_INF("Perform pre-scheduler initializations for nrf_perf");
 	nrf_perf_pre_scheduler_init();
 
 	PwrMgt_init();
 	PwrMgt_traceResetReason();
 
-	LOG_INF("Perform post-scheduler initializations for nrf_perf");
 	nrf_perf_post_scheduler_init();
 }
 

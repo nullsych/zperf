@@ -3,7 +3,7 @@
  * @brief  Contain main implementation for NrfPerfTask.
  * @author nullsych
  * @date   May 7, 2024
- * The code inside NrfPerfTask consist of the main measuring routine from nrf_perf lib.
+ * The code inside NrfPerfTask consist of the main measuring routine from nrf_perf.
  *
  */
 

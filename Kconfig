@@ -6,7 +6,7 @@ menuconfig NRF_PERF
     select THREAD_NAME
     select TRACING
     help
-      Enable the nrf_perf runtime analyzer library and its Zephyr tracing hooks.
+      Enable the nrf_perf runtime analyzer tool and its Zephyr tracing hooks.
 
 if NRF_PERF
 

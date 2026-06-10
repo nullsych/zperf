@@ -1,7 +1,7 @@
 /**
  * @file   main.c
  * @brief  Contain implementation of OS-specific hook routines.
- *         Serves as build mock for West, the real magic is in library.
+ *         Serves as build mock for West, the real magic is in tool.
  * @author nullsych
  * @date   May 7, 2024
  *

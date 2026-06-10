@@ -4,7 +4,7 @@
 
 It measures per-task execution behavior in microseconds with high-resolution timing. It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
 
-In addition, it counts context switches per task (`Total Switches`) to reflect scheduling activity and task preemption frequency. The library aggregates this data over a fixed time interval (typically one second) to provide a system-wide performance snapshot, including `CPU load` distribution across tasks, `Idle time` percentage, and `Kernel` overhead.
+In addition, it counts context switches per task (`Total Switches`) to reflect scheduling activity and task preemption frequency. The tool aggregates this data over a fixed time interval (typically one second) to provide a system-wide performance snapshot, including `CPU load` distribution across tasks, `Idle time` percentage, and `Kernel` overhead.
 
 ⚡️ The result is a simple and precise runtime profiling tool that helps analyze scheduling efficiency, task behavior, and overall system utilization on embedded device:
 
@@ -29,7 +29,7 @@ In addition, it counts context switches per task (`Total Switches`) to reflect s
 
 ## Design Philosophy
 
-Although `nrf_perf` currently targets Zephyr RTOS, you may notice that the internal architecture was intentionally designed with portability in mind. The profiling core is largely decoupled from Zephyr-specific APIs, while RTOS integration is isolated behind a small set of tracing and timing hooks. This approach was chosen to make the library as generic as possible and to simplify future integration with other RTOSes such as `FreeRTOS`, `ThreadX`, `RTEMS`, or custom schedulers.
+Although `nrf_perf` currently targets Zephyr RTOS, you may notice that the internal architecture was intentionally designed with portability in mind. The profiling core is largely decoupled from Zephyr-specific APIs, while RTOS integration is isolated behind a small set of tracing and timing hooks. This approach was chosen to make the tool as generic as possible and to simplify future integration with other RTOSes such as `FreeRTOS`, `ThreadX`, `RTEMS`, or custom schedulers.
 
 The original goal was to build a lightweight profiling framework rather than a `Zephyr-only` utility. However, to keep the scope manageable and validate the design in a real-world environment, development initially focused on Zephyr. As a result, the current implementation serves both as a practical profiler for Zephyr-based applications and as a foundation for future RTOS-agnostic extensions.
 
@@ -37,7 +37,7 @@ The original goal was to build a lightweight profiling framework rather than a `
 
 ```
 .
-├── src/                   - library source files
+├── src/                   - source files
 ├── include/               - public API headers
 ├── map/                   - RTOS hook map (Zephyr-specific)
 ├── wrapper/               - Zephyr tracing wrapper
@@ -53,7 +53,7 @@ The original goal was to build a lightweight profiling framework rather than a `
 
 ### Startup statistics
 
-At the start of the device library used inner `k_thread_foreach()` Zephyr feature to iterate over all the threads in the system, passing unique Thread ID and user data into our custom `nrf_perf_enumerate_callback()`. As the result you can trace it's unique `Name`, configured `Priority`, `Stack size`, and `Custom data`:
+At the start of the device the tool used inner `k_thread_foreach()` Zephyr feature to iterate over all the threads in the system, passing unique Thread ID and user data into our custom `nrf_perf_enumerate_callback()`. As the result you can trace it's unique `Name`, configured `Priority`, `Stack size`, and `Custom data`:
 
 ```
 Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
@@ -111,7 +111,7 @@ We use `Custom data` for assigning a task-iterator to track the Task later.
 
 ### Sampling window statistics
 
-During runtime library prints window system performance (typically per one second):
+During runtime the tool prints window system performance (typically per one second):
 
 ```
 [00:01:14.311,248] <inf> nrf_perf: # #####################   1 Second System Performance   ###################### #
@@ -132,7 +132,7 @@ During runtime library prints window system performance (typically per one secon
 [00:01:14.311,645] <inf> nrf_perf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 ```
 
-The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The library integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
+The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The tool integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
 
 * `sys_trace_thread_switched_in_user()` – invoked when a thread is scheduled in. `nrf_perf` records the start timestamp of the task execution period.
 * `sys_trace_thread_switched_out_user()` – invoked when a thread is scheduled out. `nrf_perf` calculates the elapsed runtime, updates the task's accumulated execution time, maximum runtime slice, and context switch counters.
