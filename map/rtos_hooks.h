@@ -1,6 +1,6 @@
 /**
  * @file   RTOS_Hooks.h
- * @brief  Declare RTOS-specific hook functions with invoked nrf_perf's API.
+ * @brief  Declare RTOS-specific hook functions with invoked zperf's API.
  * @author nullsych
  * @date   May 6, 2024
  *
@@ -8,13 +8,13 @@
  *
  * Os_Hook_Function (...)
  * {
- *    nrf_perf_<Hook>(...);
+ *    zperf_<Hook>(...);
  * }
  *
  */
 /* clang-format off */
-#ifndef NRF_PERF_RTOS_SYSTEM_HOOKS_H
-#define NRF_PERF_RTOS_SYSTEM_HOOKS_H
+#ifndef ZPERF_RTOS_SYSTEM_HOOKS_H
+#define ZPERF_RTOS_SYSTEM_HOOKS_H
 
 /*******************************************************************************************************************
  *                                             RTOS-SPECIFIC HEADERS                                               *
@@ -31,5 +31,5 @@ void sys_trace_isr_enter_user(void);
 void sys_trace_isr_exit_user(void);
 void sys_trace_idle_user(void);
 
-#endif /* NRF_PERF_RTOS_SYSTEM_HOOKS_H */
+#endif /* ZPERF_RTOS_SYSTEM_HOOKS_H */
 /* clang-format on */

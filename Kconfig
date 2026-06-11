@@ -1,68 +1,68 @@
-menuconfig NRF_PERF
-    bool "nrf_perf runtime analyzer"
+menuconfig ZPERF
+    bool "zperf runtime analyzer"
     select LOG
     select THREAD_CUSTOM_DATA
     select THREAD_MONITOR
     select THREAD_NAME
     select TRACING
     help
-      Enable the nrf_perf runtime analyzer tool and its Zephyr tracing hooks.
+      Enable the zperf runtime analyzer tool and its Zephyr tracing hooks.
 
-if NRF_PERF
+if ZPERF
 
-config NRF_PERF_TRACE_MAIN_STAT
+config ZPERF_TRACE_MAIN_STAT
     bool "Trace per-cycle thread runtime statistics"
     default y
 
-config NRF_PERF_TRACE_UPTIME
+config ZPERF_TRACE_UPTIME
     bool "Trace uptime statistics"
     default y
 
-config NRF_PERF_TRACE_HISTORY
+config ZPERF_TRACE_HISTORY
     bool "Trace collected hook history"
     default n
 
-config NRF_PERF_TRACE_CPU_LOAD
+config ZPERF_TRACE_CPU_LOAD
     bool "Trace CPU load statistics"
     default y
 
-config NRF_PERF_RTOS_HAS_SYSTEM_TASKS
+config ZPERF_RTOS_HAS_SYSTEM_TASKS
     bool "Account for RTOS-created system threads"
     default y
 
-config NRF_PERF_USER_TASKS_COUNT
+config ZPERF_USER_TASKS_COUNT
     int "Number of application threads"
     default 3
     range 0 255
 
-config NRF_PERF_SYSTEM_TASKS_COUNT
+config ZPERF_SYSTEM_TASKS_COUNT
     int "Number of RTOS/system threads"
     default 5
     range 0 255
-    depends on NRF_PERF_RTOS_HAS_SYSTEM_TASKS
+    depends on ZPERF_RTOS_HAS_SYSTEM_TASKS
 
-config NRF_PERF_ISR_RUNTIME_SUPPORTED
+config ZPERF_ISR_RUNTIME_SUPPORTED
     bool "Enable ISR runtime accounting"
     default y
 
-config NRF_PERF_ISR_RUNTIME_DISTINGUISH
+config ZPERF_ISR_RUNTIME_DISTINGUISH
     bool "Distinguish individual ISRs"
     default n
 
-config NRF_PERF_ISR_TOTAL_RUNTIME_ONLY
+config ZPERF_ISR_TOTAL_RUNTIME_ONLY
     bool "Measure total ISR runtime only"
     default y
 
-config NRF_PERF_RTOS_HAS_IDLE_SWITCHES
+config ZPERF_RTOS_HAS_IDLE_SWITCHES
     bool "RTOS exposes idle enter/exit switches"
     default n
 
-config NRF_PERF_HISTORY_SIZE
+config ZPERF_HISTORY_SIZE
     int "Hook history size"
-    default 8
+    default 25
     range 1 1024
 
-config NRF_PERF_CPU_USAGE_THRESHOLD
+config ZPERF_CPU_USAGE_THRESHOLD
     int "CPU usage warning threshold"
     default 50
     range 0 100

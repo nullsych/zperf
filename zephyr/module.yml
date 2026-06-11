@@ -1,4 +1,4 @@
-name: nrf_perf
+name: zperf
 build:
   cmake: .
   kconfig: Kconfig

@@ -15,9 +15,6 @@
 #define TASK_LOCAL static
 #define TASK_ENTRY_POINT
 
-void Led_createTask(void);
-void Ble_createTask(void);
-void nrf_perf_create_task(void);
 // void ApplTasks__startThreadAnalyzer(void);
 
 /*

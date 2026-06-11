@@ -7,8 +7,8 @@
  */
 
 /* clang-format off */
-#ifndef NRF_PERF_RTOS_MAP_H
-#define NRF_PERF_RTOS_MAP_H
+#ifndef ZPERF_RTOS_MAP_H
+#define ZPERF_RTOS_MAP_H
 
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC HEADERS                                                *
@@ -19,9 +19,9 @@
 #include <zephyr/logging/log.h>
 
 /*******************************************************************************************************************
- *                                             nrf_perf HEADERS                                                     *
+ *                                             zperf HEADERS                                                     *
  ******************************************************************************************************************/
-#include "nrf_perf_cfg.cfg"
+#include "zperf.cfg"
 
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC LOCKS                                                  *
@@ -34,7 +34,7 @@
 /*******************************************************************************************************************
 *                                             RTOS-SPECIFIC TRACES                                                 *
 *******************************************************************************************************************/
-/** @details: Map specific functions with printf()-compatible format to trace nrf_perf* statistics **/
+/** @details: Map specific functions with printf()-compatible format to trace zperf* statistics **/
 #define MAP_RTOS_TRACE_INFO                         LOG_INF
 #define MAP_RTOS_TRACE_WARN                         LOG_WRN
 #define MAP_RTOS_TRACE_ERRO                         LOG_ERR
@@ -46,13 +46,13 @@
 /** @details: Map RTOS-specific constants **/
 
 /** @brief Number of user's Tasks (Threads), runnings in system. */
-#ifdef CONFIG_NRF_PERF_USER_TASKS_COUNT
-#define MAP_RTOS_USER_TASKS_COUNT                   (CONFIG_NRF_PERF_USER_TASKS_COUNT)
+#ifdef CONFIG_ZPERF_USER_TASKS_COUNT
+#define MAP_RTOS_USER_TASKS_COUNT                   (CONFIG_ZPERF_USER_TASKS_COUNT)
 #else
 #define MAP_RTOS_USER_TASKS_COUNT                   (3U)
 #endif
 
-#if (NP_CFG_RTOS_HAS_SYSTEM_TASKS == NP_CFG_ON)
+#if (ZP_CFG_RTOS_HAS_SYSTEM_TASKS == ZP_CFG_ON)
 /** @brief Zephyr RTOS, like many other RTOSs, has an implicit task creation mechanism.
  *         That means, unfortunately you are not be able to determine all threads
  *         (e.g. system threads) at compile time, because it's created inside RTOS sources.
@@ -69,15 +69,15 @@
  *
  *              void k_thread_foreach(k_thread_user_cb_t user_cb, void *user_data)
  *
- *         Since we use this function in backend (nrf_perf_RTOS_Wrapper) at the start of the application,
+ *         Since we use this function in backend (zperf_RTOS_Wrapper) at the start of the application,
  *         you can get the actual number of running tasks and it's data, and then change RTOS_SYS_TASK_COUNT.
  *         It iterates over all the threads in the system, and calls the user_cb function for each thread,
  *         which could be used once to calculate a number of your running threads, includes both system's and user's (MAP_RTOS_USER_TASKS_COUNT) created threads.
  */
-#ifdef CONFIG_NRF_PERF_SYSTEM_TASKS_COUNT
-#define RTOS_SYS_TASK_COUNT                         (CONFIG_NRF_PERF_SYSTEM_TASKS_COUNT)
+#ifdef CONFIG_ZPERF_SYSTEM_TASKS_COUNT
+#define RTOS_SYS_TASK_COUNT                         (CONFIG_ZPERF_SYSTEM_TASKS_COUNT)
 #else
-#define RTOS_SYS_TASK_COUNT                         (5U)
+#error("Please configure number of tasks you have!")
 #endif
 #else
 #define RTOS_SYS_TASK_COUNT                         (0U)
@@ -115,5 +115,5 @@
 /** @brief Unique identifier for RTOS's running units e.g. Tasks (Threads), ISRs etc. */
 #define MAP_RTOS_UNIQ_ID                            uint32_t
 
-#endif /* NRF_PERF_RTOS_MAP_H */
+#endif /* ZPERF_RTOS_MAP_H */
 /* clang-format on */

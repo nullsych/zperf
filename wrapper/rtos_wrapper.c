@@ -1,5 +1,5 @@
 /**
- * @file   nrf_perf_startup.c
+ * @file   zperf_startup.c
  * @brief  Implementation of wrappers that encapsulate Zephyr-specific API.
  * @author nullsych
  * @date   Jul 18, 2024
@@ -16,15 +16,15 @@
 #include <zephyr/tracing/tracing.h>
 
 /*******************************************************************************************************************
-*                                                nrf_perf HEADERS                                                   *
+*                                                zperf HEADERS                                                   *
 *******************************************************************************************************************/
-#include "nrf_perf_data_types.h"
-#include "nrf_perf_keywords.h"
-#include "nrf_perf.h"
+#include "zperf_data_types.h"
+#include "zperf_keywords.h"
+#include "zperf_internal.h"
 #include "wrapper.h"
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(nrf_perf_startup, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(zperf_startup, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
 *                                            WRAPPER API IMPLEMENTATION                                            *
@@ -34,7 +34,7 @@ LOG_MODULE_REGISTER(nrf_perf_startup, LOG_LEVEL_DBG);
 /**
  * @brief Get unique task_id (zephyr thread ID) of the current Task (Thread).
  */
-NP_RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void)
+ZP_RTOS_WRAPPER uint32_t wr_get_task_id(void)
 {
 	/**
 	 * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be
@@ -44,9 +44,9 @@ NP_RTOS_WRAPPER uint32_t nrf_perf_get_task_id(void)
 }
 
 /**
- * @brief Get task iterator (nrf_perf specific) based on task_id (zephyr thread ID).
+ * @brief Get task iterator (zperf specific) based on task_id (zephyr thread ID).
  */
-NP_RTOS_WRAPPER uint8_t nrf_perf_get_task_iterator(uint32_t task_id)
+ZP_RTOS_WRAPPER uint8_t wr_get_task_iterator(uint32_t task_id)
 {
 	k_tid_t id = (k_tid_t)(task_id);
 	return (uint8_t)(uintptr_t)id->custom_data;
@@ -55,7 +55,7 @@ NP_RTOS_WRAPPER uint8_t nrf_perf_get_task_iterator(uint32_t task_id)
 /**
  * @brief Get task name based on task_id (zephyr thread ID).
  */
-NP_RTOS_WRAPPER const char *nrf_perf_get_task_name(uint32_t task_id)
+ZP_RTOS_WRAPPER const char *wr_get_task_name(uint32_t task_id)
 {
 	return k_thread_name_get((k_tid_t)task_id);
 }
@@ -63,12 +63,12 @@ NP_RTOS_WRAPPER const char *nrf_perf_get_task_name(uint32_t task_id)
 /**
  * @brief Get unique ID of the current ISR.
  */
-NP_RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void)
+ZP_RTOS_WRAPPER uint32_t wr_get_isr_id(void)
 {
-	return k_is_in_isr() ? NP_ISR_ID_SIGN : 0U;
+	return k_is_in_isr() ? ZP_ISR_ID_SIGN : 0U;
 }
 
-NP_RTOS_WRAPPER void nrf_perf_enumerate_callback(np_task_ptr thread, void *user_data)
+ZP_RTOS_WRAPPER void wr_enumerate_callback(zp_task_ptr thread, void *user_data)
 {
 	static uint8_t task_iterator = 0;
 
@@ -86,12 +86,12 @@ NP_RTOS_WRAPPER void nrf_perf_enumerate_callback(np_task_ptr thread, void *user_
 	mod_thread->custom_data = (void *)(uintptr_t)task_iterator;
 
 	/* Print config data */
-	NP_TRACE_INFO("Iterating %d thread in the system. Thread data: ",
+	ZP_TRACE_INFO("Iterating %d thread in the system. Thread data: ",
 		      (uint8_t)(uintptr_t)mod_thread->custom_data);
-	NP_TRACE_INFO("      Name        : %s", mod_thread->name);
-	NP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
-	NP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
-	NP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
+	ZP_TRACE_INFO("      Name        : %s", mod_thread->name);
+	ZP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
+	ZP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
+	ZP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
 
 	task_iterator++;
 }
@@ -99,15 +99,15 @@ NP_RTOS_WRAPPER void nrf_perf_enumerate_callback(np_task_ptr thread, void *user_
 /**
  * @brief Saves RTU's (Runtime Unit, Tasks/ISRs) configuration.
  */
-NP_RTOS_WRAPPER void nrf_perf_init_configuration(void)
+ZP_RTOS_WRAPPER void wr_init_configuration(void)
 {
 	/**
 	 * @note Assign pointer to the local callback function to save cfg
 	 */
-	k_thread_foreach(nrf_perf_enumerate_callback, NULL);
+	k_thread_foreach(wr_enumerate_callback, NULL);
 }
 
-NP_RTOS_WRAPPER uint32_t nrf_perf_get_uptime_timestamp(void)
+ZP_RTOS_WRAPPER uint32_t wr_get_uptime_timestamp(void)
 {
 	uint32_t timestamp;
 	timestamp = k_uptime_ticks();

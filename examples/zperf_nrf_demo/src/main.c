@@ -15,7 +15,7 @@
 #include "common/TasksApi.h"
 
 /* Tool global API */
-#include <nrf_perf.h>
+#include <zperf.h>
 
 /* Rest of unmapped Zephyr hooks */
 #include "RTOSHooks.h"
@@ -28,12 +28,12 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 int main(void)
 {
-	nrf_perf_pre_scheduler_init();
+	zperf_pre_scheduler_init();
 
 	PwrMgt_init();
 	PwrMgt_traceResetReason();
 
-	nrf_perf_post_scheduler_init();
+	zperf_post_scheduler_init();
 }
 
 /* EOF */

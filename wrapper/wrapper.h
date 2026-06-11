@@ -6,11 +6,11 @@
  *
  */
 
-#ifndef NRF_PERF_WRAPPER_H
-#define NRF_PERF_WRAPPER_H
+#ifndef ZPERF_WRAPPER_H
+#define ZPERF_WRAPPER_H
 
-#include "nrf_perf_rtos_wrapper.h"
+#include "rtos_wrapper.h"
 
-NP_RTOS_WRAPPER uint32_t nrf_perf_get_isr_id(void);
+ZP_RTOS_WRAPPER uint32_t zperf_get_isr_id(void);
 
-#endif /* NRF_PERF_WRAPPER_H */
+#endif /* ZPERF_WRAPPER_H */

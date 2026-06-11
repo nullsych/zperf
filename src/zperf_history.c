@@ -1,5 +1,5 @@
 /**
- * @file   nrf_perf_history.c
+ * @file   zperf_history.c
  * @brief
  * @author nullsych
  * @date   Jule 9, 2024
@@ -12,13 +12,14 @@
 #include <stdlib.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(nrf_perf_history, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(zperf_history, LOG_LEVEL_DBG);
 
 /*******************************************************************************************************************
- *                                                nrf_perf HEADERS                                                  *
+ *                                                zperf HEADERS                                                  *
  ******************************************************************************************************************/
-#include "nrf_perf.h"
-#include "nrf_perf_history.h"
+#include "zperf_internal.h"
+#include "zperf_history.h"
+#include "wrapper.h"
 
 /*******************************************************************************************************************
  *                                              STATISTIC ENTITIES                                                 *
@@ -29,85 +30,113 @@ LOG_MODULE_REGISTER(nrf_perf_history, LOG_LEVEL_DBG);
  * @details Store a system 'footprint' for last microseconds.
  * Could be used for runtime analysis in cases of thread starvation or sporadically resets.
  */
-NP_LOCAL np_hook_history     history_handler;
+ZP_LOCAL zp_hook_history     history_handler;
 
 /**
  * @brief Index for history_handler's circular buffer.
  */
-NP_LOCAL uint32_t            history_index  = 0U;
+ZP_LOCAL uint32_t            history_index  = 0U;
 
 /**
  * @brief Size for history_handler's circular buffer.
  */
-NP_LOCAL uint32_t            history_size = 0U;
+ZP_LOCAL uint32_t            history_size = 0U;
 
 /*******************************************************************************************************************
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
 /* clang-format on */
 
-NP_HOOK_CALLED uint8_t nrf_perf_history_get_last_state(void)
+ZP_HOOK_CALLED uint8_t history_get_last_state(void)
 {
 	return history_handler.entities[history_index].state;
 }
 
-NP_HOOK_CALLED uint32_t nrf_perf_history_get_last_timestamp(void)
+ZP_HOOK_CALLED uint32_t history_get_last_timestamp(void)
 {
 	return history_handler.entities[history_index].timestamp;
 }
 
-NP_HOOK_CALLED uint8_t nrf_perf_history_get_last_task(void)
+ZP_HOOK_CALLED uint32_t history_get_last_task(void)
 {
-	return history_handler.entities[history_index].identifier;
+	return history_handler.entities[history_index].task_id;
 }
 
-NP_HOOK_CALLED void nrf_perf_history_init(void)
+ZP_HOOK_CALLED void history_init(void)
 {
 	history_index = 0U;
 	history_size = 0U;
 }
 
-NP_HOOK_CALLED void nrf_perf_history_dump_byte_stream(void)
+ZP_HOOK_CALLED void history_dump_byte_stream(void)
 {
 	// TODO: add crc32 calculation
 	// TODO: dump byte-stream from history
 }
 
-NP_HOOK_CALLED void nrf_perf_history_clear(void)
+ZP_HOOK_CALLED void history_clear(void)
 {
 	for (uint32_t idx = 0; idx < history_size; idx++) {
-		history_handler.entities[idx].identifier = 0;
+		history_handler.entities[idx].task_id = 0;
 		history_handler.entities[idx].state = 0;
 		history_handler.entities[idx].timestamp = 0;
 	}
 }
 
-NP_HOOK_CALLED void nrf_perf_history_update(uint32_t identifier, uint32_t timestamp, uint8_t state)
+ZP_HOOK_CALLED void history_update(uint32_t identifier, uint32_t timestamp, uint8_t state)
 {
-	np_hook *currentEntity = &history_handler.entities[history_index];
+	zp_hook *slot = &history_handler.entities[history_index];
 
-	if (currentEntity != NULL) {
-		currentEntity->state = state;
-		currentEntity->identifier = identifier;
-		currentEntity->timestamp = timestamp;
+	if (slot != NULL) {
+		slot->state = state;
+		slot->task_id = identifier;
+		slot->timestamp = timestamp;
 
 		history_index++;
-		history_index %= NP_HISTORY_SIZE;
+		history_index %= ZP_HISTORY_SIZE;
 		history_size =
-			(history_size < NP_HISTORY_SIZE) ? (history_size + 1) : NP_HISTORY_SIZE;
+			(history_size < ZP_HISTORY_SIZE) ? (history_size + 1) : ZP_HISTORY_SIZE;
 	}
 }
 
-NP_USER_CALLED void nrf_perf_history_trace_collected(void)
+static const char *state_to_str(uint8_t state)
 {
-	NP_TRACE_INFO("# ############### Collected History ############### #");
-	NP_TRACE_INFO("#                                                   #");
-	NP_TRACE_INFO("#    Task Id             Mask         Timestamp    #");
+	switch (state) {
+	case TASK_STATE_ENTER:
+		return "IN";
+	case TASK_STATE_EXIT:
+		return "OUR";
+	case ISR_STATE_ENTER:
+		return "ISR_IN";
+	case ISR_STATE_EXIT:
+		return "ISR_OUT";
+	case IDLE_STATE_RUNNING:
+		return "IDLE";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+static const char *task_name_safe(uint32_t task_id)
+{
+	if (task_id == 0) {
+		return "ISR";
+	}
+	const char *name = wr_get_task_name(task_id);
+	return (name != NULL) ? name : "?";
+}
+
+ZP_USER_CALLED void history_trace_collected(void)
+{
+	ZP_TRACE_INFO("# ############### Collected History ############### #");
+	ZP_TRACE_INFO("#                                                   #");
+	ZP_TRACE_INFO("# Task Name           State    Timestamp            #");
 
 	for (uint32_t idx = 0; idx < history_size; idx++) {
-		NP_TRACE_INFO("%s %8u %17u %18u %5s", "#", history_handler.entities[idx].identifier,
-			      history_handler.entities[idx].state,
-			      history_handler.entities[idx].timestamp, "#");
+		ZP_TRACE_INFO("# %-12s   %10s   %10u            #",
+			      task_name_safe(history_handler.entities[idx].task_id),
+			      state_to_str(history_handler.entities[idx].state),
+			      history_handler.entities[idx].timestamp);
 	}
-	NP_TRACE_INFO("# ################################################# #\n");
+	ZP_TRACE_INFO("# ################################################# #\n");
 }
