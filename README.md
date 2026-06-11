@@ -22,7 +22,7 @@ In addition, it counts context switches per task (`Total Switches`) to reflect s
 #      7                 836944              107727                27          #
 #      8                      0                   0                 0          #
 # ############################################################################ #
-# ### Calculations Timeslice: 1000549
+# ### Calculations Time slice: 1000549
 
 # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 ```
@@ -104,6 +104,13 @@ Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
 [00:00:00.397,521] <inf> zperf_startup:       Custom data : 8
 ```
 
+| Field | Description |
+|-------|-------------|
+| `Name` | Thread name registered at creation (`CONFIG_THREAD_NAME=y` required) |
+| `Priority` | Zephyr thread priority; negative values are cooperative, positive are preemptive |
+| `Stack size` | Allocated stack space in bytes |
+| `Custom data` | `zperf`-assigned iterator index used internally to track the thread throughout its lifetime |
+
 We use `Custom data` for assigning a task-iterator to track the Task later.
 
 >  The ISR statistics are **paused for now**, it's calculation logic need to be reconsidered.
@@ -126,10 +133,21 @@ During runtime the tool prints window system performance (typically per one seco
 [00:01:14.311,584] <inf> zperf: #      7                 836823              113282                29          #
 [00:01:14.311,614] <inf> zperf: #      8                      0                   0                 0          #
 [00:01:14.311,614] <inf> zperf: # ############################################################################ #
-[00:01:14.311,645] <inf> zperf: # ### Calculations Timeslice: 1000549
+[00:01:14.311,645] <inf> zperf: # ### Calculations Time slice: 1000549
 
 [00:01:14.311,645] <inf> zperf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 ```
+
+Each row represents one thread tracked during the sampling window:
+
+| Column | Description |
+|--------|-------------|
+| `Task Id` | Internal `zperf` iterator index assigned at startup (matches `Custom data` from startup log) |
+| `Total runtime` | Accumulated CPU time the thread spent executing during this window, in microseconds |
+| `Max runtime` | Longest single continuous execution slice observed within the window, in microseconds |
+| `Total Switches` | Number of times the thread was scheduled in during the window |
+
+The footer line `Calculations Time slice` shows the total window duration in microseconds, and the CPU load summary reports `CPU LOAD` (active task time), `IDLE` (idle thread time), and `KERNEL` (scheduling overhead) as percentages of that time slice.
 
 The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The tool integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
 
@@ -355,7 +373,7 @@ $ rtio -d /dev/ttyACM0
 [00:01:57.335,418] <inf> zperf: #      7                 836944              107727                27          #
 [00:01:57.335,449] <inf> zperf: #      8                      0                   0                 0          #
 [00:01:57.335,449] <inf> zperf: # ############################################################################ #
-[00:01:57.335,479] <inf> zperf: # ### Calculations Timeslice: 1000549
+[00:01:57.335,479] <inf> zperf: # ### Calculations Time slice: 1000549
 
 [00:01:57.335,479] <inf> zperf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 
@@ -372,7 +390,7 @@ $ rtio -d /dev/ttyACM0
 [00:01:58.335,968] <inf> zperf: #      7                 836792              104920                25          #
 [00:01:58.335,998] <inf> zperf: #      8                      0                   0                 0          #
 [00:01:58.335,998] <inf> zperf: # ############################################################################ #
-[00:01:58.335,998] <inf> zperf: # ### Calculations Timeslice: 1000550
+[00:01:58.335,998] <inf> zperf: # ### Calculations Time slice: 1000550
 
 [00:01:58.336,029] <inf> zperf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
 
