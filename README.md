@@ -171,7 +171,7 @@ Each row represents one scheduler event:
 | Column | Description |
 |--------|-------------|
 | `Task Name` | Thread name as registered with Zephyr (`CONFIG_THREAD_NAME=y` required) |
-| `State` | Scheduler event type: `IN` — thread scheduled in, `OUR` — thread scheduled out, `ISR_IN` — ISR entered, `ISR_OUT` — ISR exited, `IDLE` — idle thread running |
+| `State` | Scheduler event type: `IN` — thread scheduled in, `OUT` — thread scheduled out, `ISR_IN` — ISR entered, `ISR_OUT` — ISR exited, `IDLE` — idle thread running |
 | `Timestamp` | Hardware timestamp in microseconds (`k_uptime_ticks` converted to µs) |
 
 ```
@@ -191,16 +191,16 @@ Each row represents one scheduler event:
 [00:00:07.462,219] <inf> zperf_history: # idle                 IDLE      7377594            #
 [00:00:07.462,249] <inf> zperf_history: # idle                 IDLE      7377869            #
 [00:00:07.462,310] <inf> zperf_history: # idle                 IDLE      7378113            #
-[00:00:07.462,341] <inf> zperf_history: # idle                  OUR      7461334            #
+[00:00:07.462,341] <inf> zperf_history: # idle                  OUT      7461334            #
 [00:00:07.462,371] <inf> zperf_history: # Task_ZPerf             IN      7461365            #
-[00:00:07.462,402] <inf> zperf_history: # idle                  OUR      7338837            #
+[00:00:07.462,402] <inf> zperf_history: # idle                  OUT      7338837            #
 [00:00:07.462,463] <inf> zperf_history: # Task_BLE               IN      7338867            #
-[00:00:07.462,493] <inf> zperf_history: # Task_BLE              OUR      7338898            #
+[00:00:07.462,493] <inf> zperf_history: # Task_BLE              OUT      7338898            #
 [00:00:07.462,524] <inf> zperf_history: # idle                   IN      7338898            #
 [00:00:07.462,554] <inf> zperf_history: # idle                 IDLE      7338928            #
-[00:00:07.462,615] <inf> zperf_history: # idle                  OUR      7340637            #
+[00:00:07.462,615] <inf> zperf_history: # idle                  OUT      7340637            #
 [00:00:07.462,646] <inf> zperf_history: # Task_LED               IN      7340668            #
-[00:00:07.462,677] <inf> zperf_history: # Task_LED              OUR      7340698            #
+[00:00:07.462,677] <inf> zperf_history: # Task_LED              OUT      7340698            #
 [00:00:07.462,707] <inf> zperf_history: # idle                   IN      7340698            #
 [00:00:07.462,768] <inf> zperf_history: # idle                 IDLE      7340698            #
 [00:00:07.462,768] <inf> zperf_history: # ################################################# #

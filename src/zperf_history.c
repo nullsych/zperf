@@ -103,13 +103,13 @@ static const char *state_to_str(uint8_t state)
 {
 	switch (state) {
 	case TASK_STATE_ENTER:
-		return "IN";
+		return "IN"; // task switch in
 	case TASK_STATE_EXIT:
-		return "OUR";
+		return "OUT"; // task switch out
 	case ISR_STATE_ENTER:
-		return "ISR_IN";
+		return "ISR_IN"; // isr switch in
 	case ISR_STATE_EXIT:
-		return "ISR_OUT";
+		return "ISR_OUT"; // isr switch out
 	case IDLE_STATE_RUNNING:
 		return "IDLE";
 	default:
