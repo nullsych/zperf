@@ -48,7 +48,7 @@ typedef enum
 /* Hook statistic */
 typedef struct ZP_PACKED {
 	uint32_t timestamp;
-	uint32_t task_id;
+	zp_task_id task_id;
 	uint8_t state;
 } zp_hook;
 

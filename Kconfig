@@ -1,7 +1,6 @@
 menuconfig ZPERF
     bool "zperf runtime analyzer"
     select LOG
-    select THREAD_CUSTOM_DATA
     select THREAD_MONITOR
     select THREAD_NAME
     select TRACING

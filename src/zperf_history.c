@@ -74,7 +74,7 @@ ZP_HOOK_CALLED uint32_t history_get_last_timestamp(void)
 	return history_handler.entities[history_last_index()].timestamp;
 }
 
-ZP_HOOK_CALLED uint32_t history_get_last_task(void)
+ZP_HOOK_CALLED zp_task_id history_get_last_task(void)
 {
 	if (history_size == 0U) {
 		return 0U;
@@ -106,7 +106,7 @@ ZP_HOOK_CALLED void history_clear(void)
 	ZP_ISR_UNLOCK(key);
 }
 
-ZP_HOOK_CALLED void history_update(uint32_t identifier, uint32_t timestamp, uint8_t state)
+ZP_HOOK_CALLED void history_update(zp_task_id identifier, uint32_t timestamp, uint8_t state)
 {
 	zp_hook *slot = &history_handler.entities[history_index];
 
@@ -140,7 +140,7 @@ static const char *state_to_str(uint8_t state)
 	}
 }
 
-static const char *task_name_safe(uint32_t task_id)
+static const char *task_name_safe(zp_task_id task_id)
 {
 	if (task_id == 0) {
 		return "ISR";

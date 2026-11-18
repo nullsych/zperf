@@ -41,4 +41,7 @@ ZP_RTOS_CALLED void pre_isr_hook(void);
 ZP_RTOS_CALLED void post_isr_hook(void);
 ZP_RTOS_CALLED void idle_task_running(void);
 
+/* Called by the RTOS wrapper while enumerating threads, with IRQs locked */
+ZP_RTOS_CALLED uint8_t zperf_task_register(zp_task_id task_id);
+
 #endif /* ZPERF_INTERNAL_H */

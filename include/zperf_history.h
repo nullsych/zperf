@@ -38,13 +38,13 @@ typedef struct ZP_PACKED {
  ********************************************************************************************************************/
 
 ZP_HOOK_CALLED ZP_GLOBAL void history_init(void);
-ZP_HOOK_CALLED ZP_GLOBAL void history_update(uint32_t, uint32_t, uint8_t);
+ZP_HOOK_CALLED ZP_GLOBAL void history_update(zp_task_id, uint32_t, uint8_t);
 ZP_HOOK_CALLED ZP_GLOBAL void history_clear(void);
 ZP_HOOK_CALLED ZP_GLOBAL void history_dump_byte_stream(void);
 ZP_USER_CALLED ZP_GLOBAL void history_trace_collected(void);
 
 ZP_HOOK_CALLED ZP_GLOBAL uint8_t history_get_last_state(void);
-ZP_HOOK_CALLED ZP_GLOBAL uint32_t history_get_last_task(void);
+ZP_HOOK_CALLED ZP_GLOBAL zp_task_id history_get_last_task(void);
 ZP_HOOK_CALLED ZP_GLOBAL uint32_t history_get_last_timestamp(void);
 
 #endif /* ZPERF_HISTORY_H */

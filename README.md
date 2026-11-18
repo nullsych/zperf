@@ -53,7 +53,7 @@ The original goal was to build a lightweight profiling framework rather than a `
 
 ### Startup statistics
 
-At the start of the device the tool used inner `k_thread_foreach()` Zephyr feature to iterate over all the threads in the system, passing unique Thread ID and user data into our custom `zperf_enumerate_callback()`. As the result you can trace it's unique `Name`, configured `Priority`, `Stack size`, and `Custom data`:
+At the start of the device the tool used inner `k_thread_foreach()` Zephyr feature to iterate over all the threads in the system, passing unique Thread ID and user data into our custom `zperf_enumerate_callback()`. As the result you can trace it's unique `Name`, configured `Priority`, `Stack size`, and `Task Id`:
 
 ```
 Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
@@ -61,47 +61,47 @@ Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
 [00:00:00.396,972] <inf> zperf_startup:       Name        : Task_ZPerf
 [00:00:00.396,972] <inf> zperf_startup:       Priority    : 5
 [00:00:00.396,972] <inf> zperf_startup:       Stack size  : 1024
-[00:00:00.397,003] <inf> zperf_startup:       Custom data : 0
+[00:00:00.397,003] <inf> zperf_startup:       Task Id     : 0
 [00:00:00.397,003] <inf> zperf_startup: Iterating 1 thread in the system. Thread data: 
 [00:00:00.397,033] <inf> zperf_startup:       Name        : Task_LED
 [00:00:00.397,033] <inf> zperf_startup:       Priority    : 7
 [00:00:00.397,033] <inf> zperf_startup:       Stack size  : 1024
-[00:00:00.397,064] <inf> zperf_startup:       Custom data : 1
+[00:00:00.397,064] <inf> zperf_startup:       Task Id     : 1
 [00:00:00.397,064] <inf> zperf_startup: Iterating 2 thread in the system. Thread data: 
 [00:00:00.397,094] <inf> zperf_startup:       Name        : Task_BLE
 [00:00:00.397,094] <inf> zperf_startup:       Priority    : 3
 [00:00:00.397,125] <inf> zperf_startup:       Stack size  : 2048
-[00:00:00.397,125] <inf> zperf_startup:       Custom data : 2
+[00:00:00.397,125] <inf> zperf_startup:       Task Id     : 2
 [00:00:00.397,125] <inf> zperf_startup: Iterating 3 thread in the system. Thread data: 
 [00:00:00.397,155] <inf> zperf_startup:       Name        : bt_tx_processor
 [00:00:00.397,186] <inf> zperf_startup:       Priority    : -1
 [00:00:00.397,186] <inf> zperf_startup:       Stack size  : 1024
-[00:00:00.397,186] <inf> zperf_startup:       Custom data : 3
+[00:00:00.397,186] <inf> zperf_startup:       Task Id     : 3
 [00:00:00.397,216] <inf> zperf_startup: Iterating 4 thread in the system. Thread data: 
 [00:00:00.397,247] <inf> zperf_startup:       Name        : BT LW WQ
 [00:00:00.397,247] <inf> zperf_startup:       Priority    : 10
 [00:00:00.397,247] <inf> zperf_startup:       Stack size  : 1408
-[00:00:00.397,277] <inf> zperf_startup:       Custom data : 4
+[00:00:00.397,277] <inf> zperf_startup:       Task Id     : 4
 [00:00:00.397,277] <inf> zperf_startup: Iterating 5 thread in the system. Thread data: 
 [00:00:00.397,308] <inf> zperf_startup:       Name        : sysworkq
 [00:00:00.397,308] <inf> zperf_startup:       Priority    : -1
 [00:00:00.397,308] <inf> zperf_startup:       Stack size  : 1024
-[00:00:00.397,338] <inf> zperf_startup:       Custom data : 5
+[00:00:00.397,338] <inf> zperf_startup:       Task Id     : 5
 [00:00:00.397,338] <inf> zperf_startup: Iterating 6 thread in the system. Thread data: 
 [00:00:00.397,369] <inf> zperf_startup:       Name        : logging
 [00:00:00.397,369] <inf> zperf_startup:       Priority    : 14
 [00:00:00.397,399] <inf> zperf_startup:       Stack size  : 768
-[00:00:00.397,399] <inf> zperf_startup:       Custom data : 6
+[00:00:00.397,399] <inf> zperf_startup:       Task Id     : 6
 [00:00:00.397,399] <inf> zperf_startup: Iterating 7 thread in the system. Thread data: 
 [00:00:00.397,430] <inf> zperf_startup:       Name        : idle
 [00:00:00.397,460] <inf> zperf_startup:       Priority    : 15
 [00:00:00.397,460] <inf> zperf_startup:       Stack size  : 320
-[00:00:00.397,460] <inf> zperf_startup:       Custom data : 7
+[00:00:00.397,460] <inf> zperf_startup:       Task Id     : 7
 [00:00:00.397,491] <inf> zperf_startup: Iterating 8 thread in the system. Thread data: 
 [00:00:00.397,521] <inf> zperf_startup:       Name        : main
 [00:00:00.397,521] <inf> zperf_startup:       Priority    : 0
 [00:00:00.397,521] <inf> zperf_startup:       Stack size  : 1024
-[00:00:00.397,521] <inf> zperf_startup:       Custom data : 8
+[00:00:00.397,521] <inf> zperf_startup:       Task Id     : 8
 ```
 
 | Field | Description |
@@ -109,9 +109,9 @@ Zephyr OS build v4.4.0-4774-g33ed1c41b918 ***
 | `Name` | Thread name registered at creation (`CONFIG_THREAD_NAME=y` required) |
 | `Priority` | Zephyr thread priority; negative values are cooperative, positive are preemptive |
 | `Stack size` | Allocated stack space in bytes |
-| `Custom data` | `zperf`-assigned iterator index used internally to track the thread throughout its lifetime |
+| `Task Id` | `zperf`-assigned iterator index used internally to track the thread throughout its lifetime |
 
-We use `Custom data` for assigning a task-iterator to track the Task later.
+`zperf` keeps its own table that maps each thread to its `Task Id`, so it never modifies thread objects and leaves fields like `custom_data` to the application. Threads created after startup get a `Task Id` on their first run, as long as free slots are left (`CONFIG_ZPERF_USER_TASKS_COUNT` + `CONFIG_ZPERF_SYSTEM_TASKS_COUNT` + idle).
 
 >  The ISR statistics are **paused for now**, it's calculation logic need to be reconsidered.
 
@@ -142,7 +142,7 @@ Each row represents one thread tracked during the sampling window:
 
 | Column | Description |
 |--------|-------------|
-| `Task Id` | Internal `zperf` iterator index assigned at startup (matches `Custom data` from startup log) |
+| `Task Id` | Internal `zperf` iterator index assigned at startup (matches `Task Id` from startup log) |
 | `Total runtime` | Accumulated CPU time the thread spent executing during this window, in microseconds |
 | `Max runtime` | Longest single continuous execution slice observed within the window, in microseconds |
 | `Total Switches` | Number of times the thread was scheduled in during the window |

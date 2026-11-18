@@ -112,8 +112,9 @@
 /** @brief Allocated stack space, measured in bytes */
 #define MAP_RTOS_STACKSIZE                          uint32_t
 
-/** @brief Unique identifier for RTOS's running units e.g. Tasks (Threads), ISRs etc. */
-#define MAP_RTOS_UNIQ_ID                            uint32_t
+/** @brief Unique identifier for RTOS's running units e.g. Tasks (Threads), ISRs etc.
+ *  @note  Holds a thread pointer, so it must be pointer-sized (64-bit targets, native_sim) */
+#define MAP_RTOS_UNIQ_ID                            uintptr_t
 
 #endif /* ZPERF_RTOS_MAP_H */
 /* clang-format on */

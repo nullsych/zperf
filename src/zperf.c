@@ -45,11 +45,20 @@ ZP_LOCAL zp_task_runtime             hook_tasks_statistics[ZP_TASK_COUNT];
  * @brief Idle task runtime metadata.
  */
 ZP_LOCAL uint8_t                    idle_task_iterator = ZP_UNINIT;
-ZP_LOCAL uint32_t                   idle_task_id       = 0U; /* 0: no idle thread seen yet */
+ZP_LOCAL zp_task_id                 idle_task_id       = 0U; /* 0: no idle thread seen yet */
 
 /**
- * @brief Set once every thread got its zperf iterator. Until then custom_data is 0 for all
- * threads, and hooks would book their runtime to task 0.
+ * @brief Thread ID for each zperf task iterator, the index in this table is the iterator.
+ * @details zperf keeps its own table instead of storing the iterator in the thread object,
+ * so it doesn't take over fields the application may use (e.g. Zephyr's custom_data).
+ * Slots are never released: a thread object reused for a new thread keeps its slot.
+ */
+ZP_LOCAL zp_task_id                 task_registry[ZP_TASK_COUNT];
+ZP_LOCAL uint8_t                    task_registry_count = 0U;
+
+/**
+ * @brief Set once the threads that exist at startup are registered. Hooks are ignored until
+ * then, so the startup log lists threads in a stable order.
  */
 ZP_LOCAL volatile bool              tasks_enumerated   = false;
 
@@ -106,6 +115,38 @@ ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator);
  *                                       HOOKS IMPLEMENTATION
  *******************************************************************************************************************/
 
+/**
+ * @brief Find the zperf iterator of a thread, ZP_UNINIT if it is not registered.
+ * @details Linear search: the table holds ZP_TASK_COUNT entries, typically around ten.
+ */
+ZP_LOCAL uint8_t zperf_task_lookup(zp_task_id task_id)
+{
+	for (uint8_t task_iterator = 0; task_iterator < task_registry_count; task_iterator++) {
+		if (task_registry[task_iterator] == task_id) {
+			return task_iterator;
+		}
+	}
+
+	return ZP_UNINIT;
+}
+
+/**
+ * @brief Get the iterator of a thread, registering it in a free slot if needed.
+ * @return ZP_UNINIT if the table is full. Must be called with IRQs locked.
+ */
+ZP_RTOS_CALLED uint8_t zperf_task_register(zp_task_id task_id)
+{
+	uint8_t task_iterator = zperf_task_lookup(task_id);
+
+	if ((task_iterator == ZP_UNINIT) && (task_id != 0U) &&
+	    (task_registry_count < ZP_TASK_COUNT)) {
+		task_iterator = task_registry_count;
+		task_registry[task_registry_count++] = task_id;
+	}
+
+	return task_iterator;
+}
+
 ZP_RTOS_CALLED void pre_task_hook(void)
 {
 	if (!tasks_enumerated) {
@@ -113,8 +154,9 @@ ZP_RTOS_CALLED void pre_task_hook(void)
 	}
 
 	uint32_t timestamp = wr_get_uptime_timestamp();
-	uint32_t task_id = wr_get_task_id();
-	uint8_t task_iterator = wr_get_task_iterator(task_id);
+	zp_task_id task_id = wr_get_task_id();
+	/* Threads created after startup get a slot on their first run, while slots are left */
+	uint8_t task_iterator = zperf_task_register(task_id);
 
 	if (TASK_IS_VALID(task_iterator)) {
 		hook_tasks_statistics[task_iterator].task_timestamp = timestamp;
@@ -132,7 +174,7 @@ ZP_RTOS_CALLED void pre_task_hook(void)
 ZP_RTOS_CALLED void post_task_hook(void)
 {
 	uint8_t task_iterator = 0;
-	uint32_t task_id = 0;
+	zp_task_id task_id = 0;
 	uint32_t task_runtime = 0;
 	uint32_t timestamp = 0;
 
@@ -141,7 +183,7 @@ ZP_RTOS_CALLED void post_task_hook(void)
 	}
 
 	task_id = wr_get_task_id();
-	task_iterator = wr_get_task_iterator(task_id);
+	task_iterator = zperf_task_lookup(task_id);
 
 	if (TASK_IS_VALID(task_iterator)) {
 		timestamp = wr_get_uptime_timestamp();
@@ -186,7 +228,7 @@ ZP_RTOS_CALLED void post_isr_hook(void)
 
 ZP_RTOS_CALLED void idle_task_running(void)
 {
-	uint32_t task_id;
+	zp_task_id task_id;
 	uint8_t task_iterator;
 
 	if (!tasks_enumerated) {
@@ -200,8 +242,7 @@ ZP_RTOS_CALLED void idle_task_running(void)
 		return;
 	}
 
-	/* Re-read every time: the iterator is assigned only once threads are enumerated */
-	task_iterator = wr_get_task_iterator(task_id);
+	task_iterator = zperf_task_lookup(task_id);
 	if (!TASK_IS_VALID(task_iterator)) {
 		return;
 	}
@@ -364,7 +405,7 @@ ZP_LOCAL void zperf_trace_uptime_statistic(void)
  */
 ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp)
 {
-	uint8_t task_iterator = wr_get_task_iterator(wr_get_task_id());
+	uint8_t task_iterator = zperf_task_lookup(wr_get_task_id());
 	zp_task_runtime *task_ptr;
 	uint32_t task_runtime;
 

@@ -34,28 +34,19 @@ LOG_MODULE_REGISTER(zperf_startup, LOG_LEVEL_DBG);
 /**
  * @brief Get unique task_id (zephyr thread ID) of the current Task (Thread).
  */
-ZP_RTOS_WRAPPER uint32_t wr_get_task_id(void)
+ZP_RTOS_WRAPPER zp_task_id wr_get_task_id(void)
 {
 	/**
 	 * @note Recommendation from Zephyr RTOS: Can't use k_current_get() as thread base might be
 	 * incorrect.
 	 */
-	return (uint32_t)k_sched_current_thread_query();
-}
-
-/**
- * @brief Get task iterator (zperf specific) based on task_id (zephyr thread ID).
- */
-ZP_RTOS_WRAPPER uint8_t wr_get_task_iterator(uint32_t task_id)
-{
-	k_tid_t id = (k_tid_t)(task_id);
-	return (uint8_t)(uintptr_t)id->custom_data;
+	return (zp_task_id)k_sched_current_thread_query();
 }
 
 /**
  * @brief Get task name based on task_id (zephyr thread ID).
  */
-ZP_RTOS_WRAPPER const char *wr_get_task_name(uint32_t task_id)
+ZP_RTOS_WRAPPER const char *wr_get_task_name(zp_task_id task_id)
 {
 	return k_thread_name_get((k_tid_t)task_id);
 }
@@ -66,7 +57,7 @@ ZP_RTOS_WRAPPER const char *wr_get_task_name(uint32_t task_id)
  * outside the idle thread (nRF LF clock start before the kernel runs, entropy and radio
  * drivers). Only the idle thread may run at K_IDLE_PRIO, so the priority identifies it.
  */
-ZP_RTOS_WRAPPER bool wr_is_idle_task(uint32_t task_id)
+ZP_RTOS_WRAPPER bool wr_is_idle_task(zp_task_id task_id)
 {
 	k_tid_t thread = (k_tid_t)task_id;
 
@@ -87,30 +78,24 @@ ZP_RTOS_WRAPPER uint32_t wr_get_isr_id(void)
 
 ZP_RTOS_WRAPPER void wr_enumerate_callback(zp_task_ptr thread, void *user_data)
 {
-	static uint8_t task_iterator = 0;
+	/* zperf keeps its own thread -> iterator table, the thread object is never modified */
+	uint8_t task_iterator = zperf_task_register((zp_task_id)thread);
 
 	ARG_UNUSED(user_data);
 
-	/* Here k_thread_custom_data_set() is not used cause id doesn't allowed to write it during
-	 * k_thread_foreach */
-	// k_thread_custom_data_set((void *)(uintptr_t)task_iterator);
-
-	/* Instead of this we use also not the best option by casting away a const qualification on
-	 * thread object of pointer type. */
-	k_tid_t mod_thread = (k_tid_t)(thread);
-
-	/* And assign a task_iterator to it*/
-	mod_thread->custom_data = (void *)(uintptr_t)task_iterator;
+	if (!TASK_IS_VALID(task_iterator)) {
+		ZP_TRACE_WARN("Thread %s is not tracked: no free slot, increase "
+			      "CONFIG_ZPERF_USER_TASKS_COUNT or CONFIG_ZPERF_SYSTEM_TASKS_COUNT",
+			      thread->name);
+		return;
+	}
 
 	/* Print config data */
-	ZP_TRACE_INFO("Iterating %d thread in the system. Thread data: ",
-		      (uint8_t)(uintptr_t)mod_thread->custom_data);
-	ZP_TRACE_INFO("      Name        : %s", mod_thread->name);
-	ZP_TRACE_INFO("      Priority    : %d", mod_thread->base.prio);
-	ZP_TRACE_INFO("      Stack size  : %d", mod_thread->stack_info.size);
-	ZP_TRACE_INFO("      Custom data : %d", (uint8_t)(uintptr_t)mod_thread->custom_data);
-
-	task_iterator++;
+	ZP_TRACE_INFO("Iterating %d thread in the system. Thread data: ", task_iterator);
+	ZP_TRACE_INFO("      Name        : %s", thread->name);
+	ZP_TRACE_INFO("      Priority    : %d", thread->base.prio);
+	ZP_TRACE_INFO("      Stack size  : %zu", thread->stack_info.size);
+	ZP_TRACE_INFO("      Task Id     : %d", task_iterator);
 }
 
 /**
