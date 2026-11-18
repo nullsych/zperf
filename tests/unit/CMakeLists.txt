@@ -35,6 +35,8 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(unity)
+# Unity enables 64-bit asserts only on 64-bit hosts by default; the -m32 build needs them too
+target_compile_definitions(unity PUBLIC UNITY_SUPPORT_64)
 
 set(ZPERF_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
