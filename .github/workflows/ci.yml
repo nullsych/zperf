@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# unit:   zperf core on the host with a fake RTOS (tests/unit), 64-bit with sanitizers and 32-bit
+# zephyr: real Zephyr via west: zperf on native_sim (32/64-bit, tests/integration) and a build
+#         of the nRF52 demo (examples/zperf_nrf_demo)
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 64-bit, ASan + UBSan
+            cmake_args: -DZPERF_TEST_SANITIZE=ON
+          - name: 32-bit
+            cmake_args: -DZPERF_TEST_M32=ON
+            packages: gcc-multilib
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install packages
+        if: matrix.packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.packages }}
+
+      - name: Configure
+        run: cmake -S tests/unit -B build/unit ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: cmake --build build/unit -j
+
+      - name: Test
+        run: ctest --test-dir build/unit --output-on-failure
+
+  zephyr:
+    name: Zephyr (native_sim tests, nRF52 demo build)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # tests/west.yml expects the manifest repository at <workspace>/zperf
+          path: zperf
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up Zephyr workspace and SDK
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: zperf
+          manifest-file-name: tests/west.yml
+          toolchains: arm-zephyr-eabi
+
+      - name: Run twister
+        run: |
+          west twister \
+            -T zperf/tests/integration \
+            -T zperf/examples \
+            --integration \
+            --inline-logs \
+            -v \
+            --outdir twister-out
+
+      - name: Upload twister results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: twister-out
+          path: |
+            twister-out/twister.json
+            twister-out/twister_report.xml
+            twister-out/**/build.log
+            twister-out/**/handler.log
+          if-no-files-found: ignore

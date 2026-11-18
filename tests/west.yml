@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# West workspace for CI: zperf as the manifest repository plus the Zephyr revision the nRF52
+# demo was verified on, with only the modules the tests and the demo need.
+#
+#   west init -l zperf --mf tests/west.yml
+#   west update -o=--depth=1 -n
+
+manifest:
+  self:
+    path: zperf
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      # main after v4.5.0 (v4.5.0-3600-g2c71005ef8a1), the build the README logs come from
+      revision: 2c71005ef8a1ae64bb3afecbfd655321a91bfd6a
+      import:
+        name-allowlist:
+          - cmsis_6     # Cortex-M core headers
+          - hal_nordic  # nrfx for nRF52
+          - mbedtls        # PSA crypto for BT_SMP in the demo
+          - tf-psa-crypto  # PSA crypto core, built by the mbedtls module
+          - segger         # RTT log backend in the demo

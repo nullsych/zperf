@@ -1,5 +1,7 @@
 # zperf
 
+[![CI](https://github.com/nullsych/zperf/actions/workflows/ci.yml/badge.svg)](https://github.com/nullsych/zperf/actions/workflows/ci.yml)
+
 `zperf` is a Zephyr RTOS runtime tool analyzer.
 
 It measures per-task execution time, reported in microseconds with the resolution of one system tick (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
@@ -45,6 +47,11 @@ The original goal was to build a lightweight profiling framework rather than a `
 ├── zephyr/                - Zephyr module descriptor (module.yml)
 ├── CMakeLists.txt         - module cmake (used by Zephyr module system)
 ├── Kconfig                - module Kconfig options
+├── tests/
+│   ├── unit/              - host unit tests of the core (Unity + CTest, fake RTOS)
+│   ├── integration/       - Zephyr tests run by twister on native_sim
+│   └── west.yml           - west workspace used by CI
+├── .github/workflows/     - CI
 └── examples/
     └── zperf_nrf_demo/      - example Zephyr application for nRF52
 ```
@@ -385,6 +392,39 @@ $ rtio -d /dev/ttyACM0
 
 [rtio 15:56:06] Quit rtio
 ```
+
+## Testing
+
+### Unit tests (host)
+
+`tests/unit` tests the zperf core on the host. The core is compiled against stub Zephyr headers and a fake RTOS that owns a simulated clock and drives the same `sys_trace_*_user()` hooks Zephyr calls, so each test describes a schedule and checks what zperf booked: runtime, max slices and switch counters per window, CPU load math, idle detection, the thread table and the task history. Two more tests check that the build fails with a clear message when `CONFIG_TRACING_USER` is off or there are more than 254 tasks.
+
+Only CMake and a C compiler are needed, [Unity](https://github.com/ThrowTheSwitch/Unity) is fetched by CMake:
+
+```sh
+cmake -S tests/unit -B build/unit -DZPERF_TEST_SANITIZE=ON   # ASan + UBSan, optional
+cmake --build build/unit
+ctest --test-dir build/unit --output-on-failure
+```
+
+`-DZPERF_TEST_M32=ON` builds 32-bit binaries (needs `gcc-multilib`).
+
+### Integration tests (Zephyr, native_sim)
+
+`tests/integration/zperf_smoke` runs zperf on a real Zephyr kernel on `native_sim`: a worker thread is busy 2 ms out of every 10 ms, and twister checks the console output for the startup thread list, a CPU load of about 20%, and named history rows for the idle and worker threads. `examples/zperf_nrf_demo/sample.yaml` adds a build-only check of the nRF52 demo.
+
+In a Zephyr workspace (for example the one from `tests/west.yml`):
+
+```sh
+west twister -T zperf/tests/integration -T zperf/examples --integration --inline-logs
+```
+
+### CI
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every push to `master` and on pull requests:
+
+* **Unit tests**: 64-bit with ASan + UBSan, and 32-bit.
+* **Zephyr**: sets up the workspace from `tests/west.yml` (zperf as the manifest repository, a pinned Zephyr revision and only the modules the demo needs), then runs twister on `native_sim` and `native_sim/native/64` and builds the nRF52 demo.
 
 ## Authors
 
