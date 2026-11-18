@@ -35,6 +35,8 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(unity)
+# Unity enables 64-bit asserts only on 64-bit hosts by default; the -m32 build needs them too
+target_compile_definitions(unity PUBLIC UNITY_SUPPORT_64)
 
 set(ZPERF_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
@@ -83,6 +85,13 @@ zperf_unit_test(test_cpu_load)
 zperf_unit_test(test_idle)
 zperf_unit_test(test_threads)
 zperf_unit_test(test_history)
+
+# The clock is RTOS-agnostic: tested on its own, without the fake RTOS
+add_executable(test_clock test_clock.c ${ZPERF_ROOT}/src/zperf_clock.c)
+target_include_directories(test_clock PRIVATE ${ZPERF_ROOT}/include)
+target_compile_options(test_clock PRIVATE -Wall -Wextra)
+target_link_libraries(test_clock PRIVATE unity)
+add_test(NAME test_clock COMMAND test_clock)
 
 # Build-time guards: these targets must fail to compile, with the expected message.
 # They are excluded from the default build and compiled by the tests themselves.

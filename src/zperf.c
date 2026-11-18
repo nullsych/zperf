@@ -543,6 +543,8 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 
 ZP_USER_CALLED void zperf_pre_scheduler_init(void)
 {
+	/* Thread context: the timestamp source may need to calibrate */
+	wr_timestamp_init();
 	history_init();
 	zperf_reset_runtime_statistic();
 }

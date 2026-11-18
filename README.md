@@ -4,7 +4,7 @@
 
 `zperf` is a Zephyr RTOS runtime tool analyzer.
 
-It measures per-task execution time, reported in microseconds with the resolution of one system tick (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
+It measures per-task execution time in microseconds, using the CPU cycle counter (DWT on Cortex-M) by default (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
 
 In addition, it counts context switches per task (`Total Switches`) to reflect scheduling activity and task preemption frequency. The tool aggregates this data over a fixed time interval (typically one second) to provide a system-wide performance snapshot, including `CPU load` distribution across tasks, `Idle time` percentage, and `Kernel` overhead.
 
@@ -158,9 +158,16 @@ The footer line `Calculations Time slice` shows the total window duration in mic
 
 ### Timing resolution
 
-All timestamps come from `k_uptime_ticks()` converted to microseconds, so the resolution is one system tick, `1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC`. On nRF52 the system timer runs from the 32.768 kHz RTC, which gives about 30.5 µs: values in the tables are multiples of it (31, 61, 92, ...), and a slice shorter than one tick is recorded as 0 or as one tick.
+All values are in microseconds. The clock behind them is chosen with `CONFIG_ZPERF_TIMESTAMP_SOURCE`:
 
-Window totals stay accurate, because consecutive slices share their boundaries and the rounding doesn't accumulate across the window. Per-thread `Total runtime`, and especially `Max runtime` of short slices, should be read with this granularity in mind.
+| Option | Clock | Resolution |
+|--------|-------|------------|
+| `CONFIG_ZPERF_TIMESTAMP_TIMING_FUNCTIONS` (default) | Cycle counter of the Zephyr [timing functions](https://docs.zephyrproject.org/latest/kernel/timing_functions/index.html): DWT `CYCCNT` on Cortex-M | 1 µs while the CPU runs, one tick across sleep |
+| `CONFIG_ZPERF_TIMESTAMP_UPTIME_TICKS` | `k_uptime_ticks()` | One system tick, `1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC` (about 30.5 µs on nRF52) |
+
+The cycle counter alone isn't a reliable clock: on Cortex-M it typically stops while the CPU sleeps in the idle thread, and it wraps quickly (about every 67 s at 64 MHz). So zperf advances its clock by the cycles counted since the previous reading and keeps it within the current kernel tick: it never falls behind the tick clock (it catches up after sleep) and never runs a full tick ahead of it. Threads are therefore timed to the microsecond, and only idle periods that include sleep are rounded to ticks. The model lives in the RTOS-agnostic `src/zperf_clock.c` and is covered by unit tests, including simulated sleep and oscillator drift.
+
+With `CONFIG_ZPERF_TIMESTAMP_UPTIME_TICKS`, values in the tables are multiples of the tick (31, 61, 92, ... on nRF52) and a slice shorter than one tick is recorded as 0 or as one tick. Window totals stay accurate in both modes, because consecutive slices share their boundaries and the rounding doesn't accumulate across the window.
 
 The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The tool integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
 
@@ -185,7 +192,7 @@ Each row represents one scheduler event:
 |--------|-------------|
 | `Task Name` | Thread name as registered with Zephyr (`CONFIG_THREAD_NAME=y` required) |
 | `State` | Scheduler event type: `IN` — thread scheduled in, `OUT` — thread scheduled out, `ISR_IN` — ISR entered, `ISR_OUT` — ISR exited, `IDLE` — idle thread running |
-| `Timestamp` | Uptime timestamp in microseconds (`k_uptime_ticks()` converted to µs, so it has system tick resolution) |
+| `Timestamp` | Uptime timestamp in microseconds, from the clock described in [Timing resolution](#timing-resolution) |
 
 ```
 [00:00:02.273,742] <inf> zperf_history: # ############ Collected History ############ #
@@ -399,21 +406,48 @@ $ rtio -d /dev/ttyACM0
 
 `tests/unit` tests the zperf core on the host. The core is compiled against stub Zephyr headers and a fake RTOS that owns a simulated clock and drives the same `sys_trace_*_user()` hooks Zephyr calls, so each test describes a schedule and checks what zperf booked: runtime, max slices and switch counters per window, CPU load math, idle detection, the thread table and the task history. Two more tests check that the build fails with a clear message when `CONFIG_TRACING_USER` is off or there are more than 254 tasks.
 
-Only CMake and a C compiler are needed, [Unity](https://github.com/ThrowTheSwitch/Unity) is fetched by CMake:
+Only CMake and a C compiler are needed, [Unity](https://github.com/ThrowTheSwitch/Unity) is fetched by CMake. From the repository root:
 
 ```sh
 cmake -S tests/unit -B build/unit -DZPERF_TEST_SANITIZE=ON   # ASan + UBSan, optional
-cmake --build build/unit
+cmake --build build/unit -j
 ctest --test-dir build/unit --output-on-failure
 ```
 
-`-DZPERF_TEST_M32=ON` builds 32-bit binaries (needs `gcc-multilib`).
+* Everything at once: `scripts/run_host_ut.sh` runs the 64-bit build with sanitizers and the 32-bit build (skipped if `gcc-multilib` is missing). Arguments go to `ctest`, e.g. `scripts/run_host_ut.sh -R test_clock`.
+* One test suite: `ctest --test-dir build/unit -R test_clock`, or run the binary directly: `build/unit/test_clock`.
+* 32-bit build, as in CI (needs `sudo apt install gcc-multilib`):
+  ```sh
+  cmake -S tests/unit -B build/unit32 -DZPERF_TEST_M32=ON
+  cmake --build build/unit32 -j
+  ctest --test-dir build/unit32 --output-on-failure
+  ```
 
 ### Integration tests (Zephyr, native_sim)
 
 `tests/integration/zperf_smoke` runs zperf on a real Zephyr kernel on `native_sim`: a worker thread is busy 2 ms out of every 10 ms, and twister checks the console output for the startup thread list, a CPU load of about 20%, and named history rows for the idle and worker threads. `examples/zperf_nrf_demo/sample.yaml` adds a build-only check of the nRF52 demo.
 
-In a Zephyr workspace (for example the one from `tests/west.yml`):
+#### With Docker
+
+In the container from [Build the demo with Docker](#build-the-demo-with-docker-zephyr-environment) (Zephyr in `/zephyr-workspace`, this repository mounted at `/workdir`):
+
+```sh
+cd /zephyr-workspace
+west twister -T /workdir/tests/integration -T /workdir/examples \
+    --integration --inline-logs --outdir /tmp/twister-out
+```
+
+This runs the same as CI: both scenarios on `native_sim` and `native_sim/native/64`, plus the nRF52 demo build.
+
+* Only native_sim, faster: `west twister -T /workdir/tests/integration -p native_sim/native/64 --outdir /tmp/twister-out`
+* One scenario: add `-s zperf.smoke.uptime_ticks`
+* zperf output of a run: `/tmp/twister-out/<platform>/.../handler.log`
+
+Keep `--outdir` outside `/workdir`, otherwise the twister results end up in the repository. The container uses its own Zephyr checkout, which may differ from the revision pinned in `tests/west.yml` for CI.
+
+#### In another Zephyr workspace
+
+For example the one from `tests/west.yml`:
 
 ```sh
 west twister -T zperf/tests/integration -T zperf/examples --integration --inline-logs

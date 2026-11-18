@@ -10,18 +10,24 @@
 #include <zperf.h>
 
 #define BUSY_WORKER_BUSY_US    2000
-#define BUSY_WORKER_SLEEP_MS   8
+#define BUSY_WORKER_PERIOD_MS  10
 #define ZPERF_REPORT_PERIOD_MS 1000
 
 static void busy_worker_entry(void *p1, void *p2, void *p3)
 {
+	int64_t next_ms = k_uptime_get();
+
 	ARG_UNUSED(p1);
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
+	/* Absolute wake-ups keep the period at 10 ms whatever the tick rate: a relative
+	 * k_msleep() would round up to ticks and stretch the period with 10 ms ticks.
+	 */
 	for (;;) {
 		k_busy_wait(BUSY_WORKER_BUSY_US);
-		k_msleep(BUSY_WORKER_SLEEP_MS);
+		next_ms += BUSY_WORKER_PERIOD_MS;
+		k_sleep(K_TIMEOUT_ABS_MS(next_ms));
 	}
 }
 
