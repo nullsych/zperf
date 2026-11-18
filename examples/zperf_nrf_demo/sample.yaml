@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
+sample:
+  name: zperf nRF52 demo
+  description: zperf with BLE, LED and power management tasks on the nRF52 DK
+
+common:
+  tags: zperf
+  build_only: true
+  platform_allow:
+    - nrf52dk/nrf52832
+  integration_platforms:
+    - nrf52dk/nrf52832
+
+tests:
+  zperf.nrf_demo: {}

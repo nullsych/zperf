@@ -223,7 +223,7 @@ ZP_RTOS_CALLED void pre_isr_hook(void)
 
 ZP_RTOS_CALLED void post_isr_hook(void)
 {
-	uint32_t timestamp = wr_get_uptime_timestamp();
+	/* ISR runtime accounting is not implemented yet */
 }
 
 ZP_RTOS_CALLED void idle_task_running(void)
