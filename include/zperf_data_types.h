@@ -37,7 +37,10 @@ typedef enum
     ISR_STATE_EXIT          = 0x03,
 
     /* Written when Idle Tasks (Thread) is running */
-    IDLE_STATE_RUNNING      = 0x04
+    IDLE_STATE_RUNNING      = 0x04,
+
+    /* Returned by history getters when no event has been recorded yet */
+    HISTORY_STATE_NONE      = 0xFF
 
 } zp_runtime_state_mask;
 /* clang-format on */

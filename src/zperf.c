@@ -69,7 +69,7 @@ ZP_LOCAL uint32_t zperf_get_timestamp_delta(uint32_t, uint32_t);
 ZP_LOCAL uint32_t zperf_get_system_runtime(void);
 ZP_LOCAL uint32_t zperf_get_idle_runtime(void);
 
-ZP_LOCAL void zperf_cycle_backup(void);
+ZP_LOCAL uint32_t zperf_cycle_backup(void);
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key);
 ZP_LOCAL void zperf_isr_unlock(unsigned int key);
@@ -292,9 +292,15 @@ ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t t
 ZP_LOCAL_INLINE void zperf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime,
 						   zp_task_runtime *task_ptr)
 {
+	ARG_UNUSED(task_ptr);
+
 	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
-	hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_ptr->max_runtime;
-	hook_uptime_statistic.tasks_switches[task_iterator] += task_ptr->task_switches;
+	hook_uptime_statistic.tasks_switches[task_iterator]++;
+
+	/* Uptime max is never reset, unlike the per-window max in task_ptr */
+	if (task_runtime > hook_uptime_statistic.max_tasks_runtime[task_iterator]) {
+		hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_runtime;
+	}
 }
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key)
@@ -312,13 +318,26 @@ ZP_LOCAL void zperf_trace_uptime_statistic(void)
 	// TODO: same for zperf_trace_cycle_statistic
 }
 
-ZP_LOCAL void zperf_cycle_backup(void)
+/**
+ * @brief Snapshot the window statistic and start a new window in one atomic step.
+ * @details Copy and reset must happen under the same lock, otherwise events arriving
+ * between them are lost. The window end timestamp is taken there as well.
+ */
+ZP_LOCAL uint32_t zperf_cycle_backup(void)
 {
 	unsigned int key;
+	uint32_t timestamp;
+
 	zperf_isr_lock(&key);
+	timestamp = wr_get_uptime_timestamp();
 	memcpy(&window_tasks_statistic, &hook_tasks_statistics, sizeof(hook_tasks_statistics));
 	memcpy(&window_uptime_statistic, &hook_uptime_statistic, sizeof(hook_uptime_statistic));
+	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
+		zperf_reset_hooks_statistic(task_iterator);
+	}
 	zperf_isr_unlock(key);
+
+	return timestamp;
 }
 
 ZP_LOCAL void zperf_trace_cycle_statistic(uint32_t *time_slice)
@@ -387,10 +406,9 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 	uint32_t curr_timestamp = 0;
 	static uint32_t last_timestamp = 0U;
 
-	zperf_cycle_backup();
+	curr_timestamp = zperf_cycle_backup();
 
 	/* Calculate time_slice */
-	curr_timestamp = wr_get_uptime_timestamp();
 	time_slice = zperf_get_timestamp_delta(last_timestamp, curr_timestamp);
 	last_timestamp = curr_timestamp;
 
@@ -410,7 +428,7 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 	history_trace_collected();
 #endif
 
-	zperf_reset_runtime_statistic();
+	/* Hook statistic was already reset atomically in zperf_cycle_backup() */
 	history_clear();
 }
 
