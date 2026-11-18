@@ -45,7 +45,7 @@ ZP_LOCAL zp_task_runtime             hook_tasks_statistics[ZP_TASK_COUNT];
  * @brief Idle task runtime metadata.
  */
 ZP_LOCAL uint8_t                    idle_task_iterator = ZP_UNINIT;
-ZP_LOCAL uint32_t                   idle_task_id       = ZP_UNINIT;
+ZP_LOCAL uint32_t                   idle_task_id       = 0U; /* 0: no idle thread seen yet */
 
 /**
  * @brief Set once every thread got its zperf iterator. Until then custom_data is 0 for all
