@@ -406,21 +406,48 @@ $ rtio -d /dev/ttyACM0
 
 `tests/unit` tests the zperf core on the host. The core is compiled against stub Zephyr headers and a fake RTOS that owns a simulated clock and drives the same `sys_trace_*_user()` hooks Zephyr calls, so each test describes a schedule and checks what zperf booked: runtime, max slices and switch counters per window, CPU load math, idle detection, the thread table and the task history. Two more tests check that the build fails with a clear message when `CONFIG_TRACING_USER` is off or there are more than 254 tasks.
 
-Only CMake and a C compiler are needed, [Unity](https://github.com/ThrowTheSwitch/Unity) is fetched by CMake:
+Only CMake and a C compiler are needed, [Unity](https://github.com/ThrowTheSwitch/Unity) is fetched by CMake. From the repository root:
 
 ```sh
 cmake -S tests/unit -B build/unit -DZPERF_TEST_SANITIZE=ON   # ASan + UBSan, optional
-cmake --build build/unit
+cmake --build build/unit -j
 ctest --test-dir build/unit --output-on-failure
 ```
 
-`-DZPERF_TEST_M32=ON` builds 32-bit binaries (needs `gcc-multilib`).
+* Everything at once: `scripts/run_host_ut.sh` runs the 64-bit build with sanitizers and the 32-bit build (skipped if `gcc-multilib` is missing). Arguments go to `ctest`, e.g. `scripts/run_host_ut.sh -R test_clock`.
+* One test suite: `ctest --test-dir build/unit -R test_clock`, or run the binary directly: `build/unit/test_clock`.
+* 32-bit build, as in CI (needs `sudo apt install gcc-multilib`):
+  ```sh
+  cmake -S tests/unit -B build/unit32 -DZPERF_TEST_M32=ON
+  cmake --build build/unit32 -j
+  ctest --test-dir build/unit32 --output-on-failure
+  ```
 
 ### Integration tests (Zephyr, native_sim)
 
 `tests/integration/zperf_smoke` runs zperf on a real Zephyr kernel on `native_sim`: a worker thread is busy 2 ms out of every 10 ms, and twister checks the console output for the startup thread list, a CPU load of about 20%, and named history rows for the idle and worker threads. `examples/zperf_nrf_demo/sample.yaml` adds a build-only check of the nRF52 demo.
 
-In a Zephyr workspace (for example the one from `tests/west.yml`):
+#### With Docker
+
+In the container from [Build the demo with Docker](#build-the-demo-with-docker-zephyr-environment) (Zephyr in `/zephyr-workspace`, this repository mounted at `/workdir`):
+
+```sh
+cd /zephyr-workspace
+west twister -T /workdir/tests/integration -T /workdir/examples \
+    --integration --inline-logs --outdir /tmp/twister-out
+```
+
+This runs the same as CI: both scenarios on `native_sim` and `native_sim/native/64`, plus the nRF52 demo build.
+
+* Only native_sim, faster: `west twister -T /workdir/tests/integration -p native_sim/native/64 --outdir /tmp/twister-out`
+* One scenario: add `-s zperf.smoke.uptime_ticks`
+* zperf output of a run: `/tmp/twister-out/<platform>/.../handler.log`
+
+Keep `--outdir` outside `/workdir`, otherwise the twister results end up in the repository. The container uses its own Zephyr checkout, which may differ from the revision pinned in `tests/west.yml` for CI.
+
+#### In another Zephyr workspace
+
+For example the one from `tests/west.yml`:
 
 ```sh
 west twister -T zperf/tests/integration -T zperf/examples --integration --inline-logs
