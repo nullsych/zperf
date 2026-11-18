@@ -181,35 +181,35 @@ Each row represents one scheduler event:
 | `Timestamp` | Uptime timestamp in microseconds (`k_uptime_ticks()` converted to µs, so it has system tick resolution) |
 
 ```
-[00:00:07.461,791] <inf> zperf_history: # ############### Collected History ############### #
-[00:00:07.461,791] <inf> zperf_history: #                                                   #
-[00:00:07.461,791] <inf> zperf_history: # Task Name           State    Timestamp            #
-[00:00:07.461,853] <inf> zperf_history: # idle                 IDLE      7375122            #
-[00:00:07.461,883] <inf> zperf_history: # idle                 IDLE      7375336            #
-[00:00:07.461,914] <inf> zperf_history: # idle                 IDLE      7375397            #
-[00:00:07.461,944] <inf> zperf_history: # idle                 IDLE      7375488            #
-[00:00:07.462,005] <inf> zperf_history: # idle                 IDLE      7375610            #
-[00:00:07.462,036] <inf> zperf_history: # idle                 IDLE      7375763            #
-[00:00:07.462,066] <inf> zperf_history: # idle                 IDLE      7375824            #
-[00:00:07.462,097] <inf> zperf_history: # idle                 IDLE      7376892            #
-[00:00:07.462,158] <inf> zperf_history: # idle                 IDLE      7377106            #
-[00:00:07.462,188] <inf> zperf_history: # idle                 IDLE      7377380            #
-[00:00:07.462,219] <inf> zperf_history: # idle                 IDLE      7377594            #
-[00:00:07.462,249] <inf> zperf_history: # idle                 IDLE      7377869            #
-[00:00:07.462,310] <inf> zperf_history: # idle                 IDLE      7378113            #
-[00:00:07.462,341] <inf> zperf_history: # idle                  OUT      7461334            #
-[00:00:07.462,371] <inf> zperf_history: # Task_ZPerf             IN      7461365            #
-[00:00:07.462,402] <inf> zperf_history: # idle                  OUT      7338837            #
-[00:00:07.462,463] <inf> zperf_history: # Task_BLE               IN      7338867            #
-[00:00:07.462,493] <inf> zperf_history: # Task_BLE              OUT      7338898            #
-[00:00:07.462,524] <inf> zperf_history: # idle                   IN      7338898            #
-[00:00:07.462,554] <inf> zperf_history: # idle                 IDLE      7338928            #
-[00:00:07.462,615] <inf> zperf_history: # idle                  OUT      7340637            #
-[00:00:07.462,646] <inf> zperf_history: # Task_LED               IN      7340668            #
-[00:00:07.462,677] <inf> zperf_history: # Task_LED              OUT      7340698            #
-[00:00:07.462,707] <inf> zperf_history: # idle                   IN      7340698            #
-[00:00:07.462,768] <inf> zperf_history: # idle                 IDLE      7340698            #
-[00:00:07.462,768] <inf> zperf_history: # ################################################# #
+[00:00:02.273,742] <inf> zperf_history: # ############ Collected History ############ #
+[00:00:02.273,742] <inf> zperf_history: #                                             #
+[00:00:02.273,773] <inf> zperf_history: # Task Name             State      Timestamp  #
+[00:00:02.273,834] <inf> zperf_history: # Task_BLE              OUT          2055878  #
+[00:00:02.273,864] <inf> zperf_history: # logging               IN           2055878  #
+[00:00:02.273,895] <inf> zperf_history: # logging               OUT          2057526  #
+[00:00:02.273,925] <inf> zperf_history: # Task_LED              IN           2057556  #
+[00:00:02.273,986] <inf> zperf_history: # Task_LED              OUT          2057587  #
+[00:00:02.274,017] <inf> zperf_history: # logging               IN           2057587  #
+[00:00:02.274,047] <inf> zperf_history: # logging               OUT          2231140  #
+[00:00:02.274,078] <inf> zperf_history: # idle                  IN           2231140  #
+[00:00:02.274,139] <inf> zperf_history: # idle                  IDLE         2231140  #
+[00:00:02.274,169] <inf> zperf_history: # idle                  IDLE         2251923  #
+[00:00:02.274,200] <inf> zperf_history: # idle                  IDLE         2252167  #
+[00:00:02.274,230] <inf> zperf_history: # idle                  IDLE         2252167  #
+[00:00:02.274,291] <inf> zperf_history: # idle                  IDLE         2252289  #
+[00:00:02.274,322] <inf> zperf_history: # idle                  IDLE         2252411  #
+[00:00:02.274,353] <inf> zperf_history: # idle                  IDLE         2252563  #
+[00:00:02.274,383] <inf> zperf_history: # idle                  IDLE         2252655  #
+[00:00:02.274,444] <inf> zperf_history: # idle                  IDLE         2253693  #
+[00:00:02.274,475] <inf> zperf_history: # idle                  IDLE         2253906  #
+[00:00:02.274,505] <inf> zperf_history: # idle                  IDLE         2254181  #
+[00:00:02.274,536] <inf> zperf_history: # idle                  IDLE         2254517  #
+[00:00:02.274,597] <inf> zperf_history: # idle                  IDLE         2254883  #
+[00:00:02.274,627] <inf> zperf_history: # idle                  IDLE         2255157  #
+[00:00:02.274,658] <inf> zperf_history: # idle                  IDLE         2255402  #
+[00:00:02.274,688] <inf> zperf_history: # idle                  OUT          2273285  #
+[00:00:02.274,749] <inf> zperf_history: # Task_ZPerf            IN           2273315  #
+[00:00:02.274,749] <inf> zperf_history: # ########################################### #
 ```
 
 ## Use tool in another Zephyr application
@@ -366,39 +366,22 @@ Once target plugged-in to your Host machine, connect to it's serial port, for ex
 $ rtio -d /dev/ttyACM0
 [rtio 15:56:04] Connected to device /dev/ttyACM0, baud rate 115200. Ctrl+T, Q to quit
 
-[00:01:57.335,083] <inf> zperf: # #####################   1 Second System Performance   ###################### #
-[00:01:57.335,083] <inf> zperf: #                                                                              #
-[00:01:57.335,113] <inf> zperf: #   Task Id         Total runtime         Max runtime        Total Switches    #
-[00:01:57.335,144] <inf> zperf: #      0                    458                 458                 1          #
-[00:01:57.335,174] <inf> zperf: #      1                     61                  61                 4          #
-[00:01:57.335,205] <inf> zperf: #      2                    154                  61                 4          #
-[00:01:57.335,266] <inf> zperf: #      3                      0                   0                 0          #
-[00:01:57.335,296] <inf> zperf: #      4                      0                   0                 0          #
-[00:01:57.335,327] <inf> zperf: #      5                      0                   0                 0          #
-[00:01:57.335,357] <inf> zperf: #      6                 162598              144135                 3          #
-[00:01:57.335,418] <inf> zperf: #      7                 836944              107727                27          #
-[00:01:57.335,449] <inf> zperf: #      8                      0                   0                 0          #
-[00:01:57.335,449] <inf> zperf: # ############################################################################ #
-[00:01:57.335,479] <inf> zperf: # ### Calculations Time slice: 1000549
+[00:00:04.276,458] <inf> zperf: # #####################   1 Second System Performance   ###################### #
+[00:00:04.276,489] <inf> zperf: #                                                                              #
+[00:00:04.276,489] <inf> zperf: #   Task Id         Total runtime         Max runtime        Total Switches    #
+[00:00:04.276,519] <inf> zperf: #      0                   1465                1465                 1          #
+[00:00:04.276,550] <inf> zperf: #      1                    182                  61                 4          #
+[00:00:04.276,580] <inf> zperf: #      2                    182                  61                 4          #
+[00:00:04.276,641] <inf> zperf: #      3                      0                   0                 0          #
+[00:00:04.276,672] <inf> zperf: #      4                      0                   0                 0          #
+[00:00:04.276,702] <inf> zperf: #      5                 412140              253357                 5          #
+[00:00:04.276,733] <inf> zperf: #      6                      0                   0                 0          #
+[00:00:04.276,763] <inf> zperf: #      7                 587341               99487                 5          #
+[00:00:04.276,794] <inf> zperf: #      8                      0                   0                 0          #
+[00:00:04.276,794] <inf> zperf: # ############################################################################ #
+[00:00:04.276,824] <inf> zperf: # ### Calculations Timeslice: 1001556
 
-[00:01:57.335,479] <inf> zperf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
-
-[00:01:58.335,632] <inf> zperf: # #####################   1 Second System Performance   ###################### #
-[00:01:58.335,632] <inf> zperf: #                                                                              #
-[00:01:58.335,662] <inf> zperf: #   Task Id         Total runtime         Max runtime        Total Switches    #
-[00:01:58.335,693] <inf> zperf: #      0                    489                 489                 1          #
-[00:01:58.335,723] <inf> zperf: #      1                     61                  61                 4          #
-[00:01:58.335,754] <inf> zperf: #      2                    152                  62                 4          #
-[00:01:58.335,784] <inf> zperf: #      3                      0                   0                 0          #
-[00:01:58.335,845] <inf> zperf: #      4                      0                   0                 0          #
-[00:01:58.335,876] <inf> zperf: #      5                      0                   0                 0          #
-[00:01:58.335,906] <inf> zperf: #      6                 162749              124359                 3          #
-[00:01:58.335,968] <inf> zperf: #      7                 836792              104920                25          #
-[00:01:58.335,998] <inf> zperf: #      8                      0                   0                 0          #
-[00:01:58.335,998] <inf> zperf: # ############################################################################ #
-[00:01:58.335,998] <inf> zperf: # ### Calculations Time slice: 1000550
-
-[00:01:58.336,029] <inf> zperf: # ################# CPU LOAD 16% ### IDLE 83% ### KERNEL 0% ################## #
+[00:00:04.276,855] <inf> zperf: # ################# CPU LOAD 41% ### IDLE 58% ### KERNEL 0% ################## #
 
 [rtio 15:56:06] Quit rtio
 ```
