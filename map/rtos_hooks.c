@@ -18,6 +18,11 @@
 #include "rtos_hooks.h"
 #include "zperf_internal.h"
 
+/* Another tracing format (e.g. SEGGER SystemView) picked in prj.conf disables the user hooks */
+#ifndef CONFIG_TRACING_USER
+#error "zperf requires CONFIG_TRACING_USER=y, the user trace hooks are its only data source"
+#endif
+
 /*******************************************************************************************************************
  *                                    PLACE IMPLEMENTATION OF RTOS-SPECIFIC HOOKS                                  *
  ******************************************************************************************************************/

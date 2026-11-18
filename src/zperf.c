@@ -45,7 +45,27 @@ ZP_LOCAL zp_task_runtime             hook_tasks_statistics[ZP_TASK_COUNT];
  * @brief Idle task runtime metadata.
  */
 ZP_LOCAL uint8_t                    idle_task_iterator = ZP_UNINIT;
-ZP_LOCAL uint32_t                   idle_task_id       = ZP_UNINIT;
+ZP_LOCAL zp_task_id                 idle_task_id       = 0U; /* 0: no idle thread seen yet */
+
+/**
+ * @brief Thread ID for each zperf task iterator, the index in this table is the iterator.
+ * @details zperf keeps its own table instead of storing the iterator in the thread object,
+ * so it doesn't take over fields the application may use (e.g. Zephyr's custom_data).
+ * Slots are never released: a thread object reused for a new thread keeps its slot.
+ */
+ZP_LOCAL zp_task_id                 task_registry[ZP_TASK_COUNT];
+ZP_LOCAL uint8_t                    task_registry_count = 0U;
+
+/**
+ * @brief Set once the threads that exist at startup are registered. Hooks are ignored until
+ * then, so the startup log lists threads in a stable order.
+ */
+ZP_LOCAL volatile bool              tasks_enumerated   = false;
+
+/**
+ * @brief Start of the current statistic window.
+ */
+ZP_LOCAL uint32_t                   window_start_timestamp = 0U;
 
 /**
  * @brief Store a copy of uptime statistic when zperf_cycle_backup() routine occurs.
@@ -69,7 +89,8 @@ ZP_LOCAL uint32_t zperf_get_timestamp_delta(uint32_t, uint32_t);
 ZP_LOCAL uint32_t zperf_get_system_runtime(void);
 ZP_LOCAL uint32_t zperf_get_idle_runtime(void);
 
-ZP_LOCAL void zperf_cycle_backup(void);
+ZP_LOCAL uint32_t zperf_cycle_backup(void);
+ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp);
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key);
 ZP_LOCAL void zperf_isr_unlock(unsigned int key);
@@ -84,8 +105,8 @@ ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t t
 ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
 						 uint32_t task_runtime);
 ZP_LOCAL_INLINE void zperf_update_idle_statistic(uint32_t timestamp);
-ZP_LOCAL_INLINE void zperf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime,
-						   zp_task_runtime *task);
+ZP_LOCAL_INLINE void zperf_book_runtime(uint8_t task_iterator, uint32_t timestamp,
+					uint32_t task_runtime);
 
 ZP_LOCAL_INLINE void zperf_reset_trace_cycle_statistic(uint8_t task_iterator);
 ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator);
@@ -94,11 +115,48 @@ ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator);
  *                                       HOOKS IMPLEMENTATION
  *******************************************************************************************************************/
 
+/**
+ * @brief Find the zperf iterator of a thread, ZP_UNINIT if it is not registered.
+ * @details Linear search: the table holds ZP_TASK_COUNT entries, typically around ten.
+ */
+ZP_LOCAL uint8_t zperf_task_lookup(zp_task_id task_id)
+{
+	for (uint8_t task_iterator = 0; task_iterator < task_registry_count; task_iterator++) {
+		if (task_registry[task_iterator] == task_id) {
+			return task_iterator;
+		}
+	}
+
+	return ZP_UNINIT;
+}
+
+/**
+ * @brief Get the iterator of a thread, registering it in a free slot if needed.
+ * @return ZP_UNINIT if the table is full. Must be called with IRQs locked.
+ */
+ZP_RTOS_CALLED uint8_t zperf_task_register(zp_task_id task_id)
+{
+	uint8_t task_iterator = zperf_task_lookup(task_id);
+
+	if ((task_iterator == ZP_UNINIT) && (task_id != 0U) &&
+	    (task_registry_count < ZP_TASK_COUNT)) {
+		task_iterator = task_registry_count;
+		task_registry[task_registry_count++] = task_id;
+	}
+
+	return task_iterator;
+}
+
 ZP_RTOS_CALLED void pre_task_hook(void)
 {
+	if (!tasks_enumerated) {
+		return;
+	}
+
 	uint32_t timestamp = wr_get_uptime_timestamp();
-	uint32_t task_id = wr_get_task_id();
-	uint8_t task_iterator = wr_get_task_iterator(task_id);
+	zp_task_id task_id = wr_get_task_id();
+	/* Threads created after startup get a slot on their first run, while slots are left */
+	uint8_t task_iterator = zperf_task_register(task_id);
 
 	if (TASK_IS_VALID(task_iterator)) {
 		hook_tasks_statistics[task_iterator].task_timestamp = timestamp;
@@ -116,12 +174,16 @@ ZP_RTOS_CALLED void pre_task_hook(void)
 ZP_RTOS_CALLED void post_task_hook(void)
 {
 	uint8_t task_iterator = 0;
-	uint32_t task_id = 0;
+	zp_task_id task_id = 0;
 	uint32_t task_runtime = 0;
 	uint32_t timestamp = 0;
 
+	if (!tasks_enumerated) {
+		return;
+	}
+
 	task_id = wr_get_task_id();
-	task_iterator = wr_get_task_iterator(task_id);
+	task_iterator = zperf_task_lookup(task_id);
 
 	if (TASK_IS_VALID(task_iterator)) {
 		timestamp = wr_get_uptime_timestamp();
@@ -166,17 +228,28 @@ ZP_RTOS_CALLED void post_isr_hook(void)
 
 ZP_RTOS_CALLED void idle_task_running(void)
 {
-	static bool idle_not_determined = true;
+	zp_task_id task_id;
+	uint8_t task_iterator;
 
-	if (idle_not_determined) {
-		idle_task_id = wr_get_task_id();
-		idle_task_iterator = wr_get_task_iterator(idle_task_id);
-		idle_not_determined = false;
+	if (!tasks_enumerated) {
+		return;
 	}
 
-	if (idle_task_iterator != ZP_UNINIT && idle_task_id != ZP_UNINIT) {
-		history_update(idle_task_id, wr_get_uptime_timestamp(), IDLE_STATE_RUNNING);
+	task_id = wr_get_task_id();
+
+	/* The hook also fires from drivers outside the idle thread, ignore those calls */
+	if (!wr_is_idle_task(task_id)) {
+		return;
 	}
+
+	task_iterator = zperf_task_lookup(task_id);
+	if (!TASK_IS_VALID(task_iterator)) {
+		return;
+	}
+
+	idle_task_id = task_id;
+	idle_task_iterator = task_iterator;
+	history_update(task_id, wr_get_uptime_timestamp(), IDLE_STATE_RUNNING);
 }
 
 /*******************************************************************************************************************
@@ -249,21 +322,31 @@ ZP_LOCAL void zperf_trace_cpu_usage(uint32_t *time_slice)
 	 * task */
 	system_total_runtime = zperf_get_system_runtime() - idle_total_runtime;
 
-	/* Calculate RTOS's resources total runtime */
-	os_total_runtime = (*time_slice) - (system_total_runtime + idle_total_runtime);
+	/* Calculate RTOS's resources total runtime. Tick rounding can make the measured runtime
+	 * slightly exceed the window, so clamp instead of letting the subtraction wrap around. */
+	if ((system_total_runtime + idle_total_runtime) < (*time_slice)) {
+		os_total_runtime = (*time_slice) - (system_total_runtime + idle_total_runtime);
+	} else {
+		os_total_runtime = 0U;
+	}
 
 	/* Calculate percentages */
-	idle_time_per = (uint8_t)GET_CPU_PERCENT((*time_slice), idle_total_runtime);
-	cpu_load_per = (uint8_t)GET_CPU_PERCENT((*time_slice), system_total_runtime);
-	os_per = (uint8_t)GET_CPU_PERCENT((*time_slice), os_total_runtime);
+	idle_time_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), idle_total_runtime), 100U);
+	cpu_load_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), system_total_runtime), 100U);
+	os_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), os_total_runtime), 100U);
 
 	ZP_TRACE_INFO("# ################# CPU LOAD %d%% ### IDLE %d%% ### KERNEL %d%% "
 		      "################## #\n",
 		      cpu_load_per, idle_time_per, os_per);
 }
 
-ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
-						 uint32_t task_runtime)
+/**
+ * @brief Book a piece of a thread's runtime to the window and uptime statistic.
+ * @details Doesn't count a context switch: callers that end a slice without a switch
+ * (idle split at ISR entry, open slice closed at the window end) use it directly.
+ */
+ZP_LOCAL_INLINE void zperf_book_runtime(uint8_t task_iterator, uint32_t timestamp,
+					uint32_t task_runtime)
 {
 	zp_task_runtime *task_ptr = &hook_tasks_statistics[task_iterator];
 
@@ -273,28 +356,41 @@ ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t
 
 	task_ptr->task_timestamp = timestamp;
 	task_ptr->total_runtime += task_runtime;
-	task_ptr->task_switches++;
 
-	zperf_update_uptime_statistic(task_iterator, task_runtime, task_ptr);
+	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
+
+	/* Uptime max is never reset, unlike the per-window max in task_ptr */
+	if (task_runtime > hook_uptime_statistic.max_tasks_runtime[task_iterator]) {
+		hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_runtime;
+	}
 }
 
+/**
+ * @brief Book a finished slice on a context switch out.
+ */
+ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
+						 uint32_t task_runtime)
+{
+	zperf_book_runtime(task_iterator, timestamp, task_runtime);
+
+	hook_tasks_statistics[task_iterator].task_switches++;
+	hook_uptime_statistic.tasks_switches[task_iterator]++;
+}
+
+/**
+ * @brief Book idle runtime up to timestamp while idle keeps running.
+ * @details Called on ISR entry when idle was running. Idle isn't switched out there, so the
+ * switch counter is left as is: it counts real context switches only, like for other threads.
+ */
 ZP_LOCAL_INLINE void zperf_update_idle_statistic(uint32_t timestamp)
 {
 	uint32_t idle_runtime = zperf_get_task_runtime(idle_task_iterator, timestamp);
-	zperf_update_task_statistic(idle_task_iterator, timestamp, idle_runtime);
+	zperf_book_runtime(idle_task_iterator, timestamp, idle_runtime);
 }
 
 ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp,
 						 uint32_t isrRuntime)
 {
-}
-
-ZP_LOCAL_INLINE void zperf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime,
-						   zp_task_runtime *task_ptr)
-{
-	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
-	hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_ptr->max_runtime;
-	hook_uptime_statistic.tasks_switches[task_iterator] += task_ptr->task_switches;
 }
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key)
@@ -312,13 +408,48 @@ ZP_LOCAL void zperf_trace_uptime_statistic(void)
 	// TODO: same for zperf_trace_cycle_statistic
 }
 
-ZP_LOCAL void zperf_cycle_backup(void)
+/**
+ * @brief Book the running thread's open slice up to the window end.
+ * @details Without this, a slice crossing the window boundary is booked whole to the window
+ * where the thread is switched out, so that window can exceed 100%. The remainder of the slice
+ * is counted from the window end on switch out. It is not a context switch, so the switch
+ * counter is left as is. Must be called with IRQs locked.
+ */
+ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp)
+{
+	uint8_t task_iterator = zperf_task_lookup(wr_get_task_id());
+
+	if (!tasks_enumerated || !TASK_IS_VALID(task_iterator)) {
+		return;
+	}
+
+	zperf_book_runtime(task_iterator, timestamp,
+			   zperf_get_task_runtime(task_iterator, timestamp));
+}
+
+/**
+ * @brief Snapshot the window statistic and start a new window in one atomic step.
+ * @details Copy and reset must happen under the same lock, otherwise events arriving
+ * between them are lost. The window end timestamp is taken there as well.
+ */
+ZP_LOCAL uint32_t zperf_cycle_backup(void)
 {
 	unsigned int key;
+	uint32_t timestamp;
+
 	zperf_isr_lock(&key);
+	timestamp = wr_get_uptime_timestamp();
+	zperf_close_running_slice(timestamp);
 	memcpy(&window_tasks_statistic, &hook_tasks_statistics, sizeof(hook_tasks_statistics));
 	memcpy(&window_uptime_statistic, &hook_uptime_statistic, sizeof(hook_uptime_statistic));
+	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
+		zperf_reset_hooks_statistic(task_iterator);
+	}
+	/* The history window ends at the same point as the statistic window */
+	history_snapshot_take(true);
 	zperf_isr_unlock(key);
+
+	return timestamp;
 }
 
 ZP_LOCAL void zperf_trace_cycle_statistic(uint32_t *time_slice)
@@ -353,14 +484,13 @@ ZP_LOCAL void zperf_reset_runtime_statistic(void)
 ZP_LOCAL_INLINE void zperf_reset_trace_cycle_statistic(uint8_t task_iterator)
 {
 	window_tasks_statistic[task_iterator].max_runtime = 0u;
-	window_tasks_statistic[task_iterator].max_runtime = 0u;
 	window_tasks_statistic[task_iterator].task_switches = 0u;
 	window_tasks_statistic[task_iterator].total_runtime = 0u;
 }
 
 ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator)
 {
-	hook_tasks_statistics[task_iterator].max_runtime = 0u;
+	/* task_timestamp is kept: it is the start of the running thread's open slice */
 	hook_tasks_statistics[task_iterator].max_runtime = 0u;
 	hook_tasks_statistics[task_iterator].task_switches = 0u;
 	hook_tasks_statistics[task_iterator].total_runtime = 0u;
@@ -385,14 +515,12 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 {
 	uint32_t time_slice = 0;
 	uint32_t curr_timestamp = 0;
-	static uint32_t last_timestamp = 0U;
 
-	zperf_cycle_backup();
+	curr_timestamp = zperf_cycle_backup();
 
 	/* Calculate time_slice */
-	curr_timestamp = wr_get_uptime_timestamp();
-	time_slice = zperf_get_timestamp_delta(last_timestamp, curr_timestamp);
-	last_timestamp = curr_timestamp;
+	time_slice = zperf_get_timestamp_delta(window_start_timestamp, curr_timestamp);
+	window_start_timestamp = curr_timestamp;
 
 #if (ZP_CFG_TRACE_MAIN_STAT == ZP_CFG_ON)
 	zperf_trace_cycle_statistic(&time_slice);
@@ -407,11 +535,10 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 #endif
 
 #if (ZP_CFG_TRACE_HISTORY == ZP_CFG_ON)
-	history_trace_collected();
+	history_trace_snapshot();
 #endif
 
-	zperf_reset_runtime_statistic();
-	history_clear();
+	/* Hook statistic and history were already reset atomically in zperf_cycle_backup() */
 }
 
 ZP_USER_CALLED void zperf_pre_scheduler_init(void)
@@ -422,7 +549,20 @@ ZP_USER_CALLED void zperf_pre_scheduler_init(void)
 
 ZP_USER_CALLED void zperf_post_scheduler_init(void)
 {
+	unsigned int key;
+	uint32_t timestamp;
+
 	wr_init_configuration();
+
+	/* Start accounting from now: hooks were ignored so far, so no task has a valid start time */
+	zperf_isr_lock(&key);
+	timestamp = wr_get_uptime_timestamp();
+	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
+		hook_tasks_statistics[task_iterator].task_timestamp = timestamp;
+	}
+	window_start_timestamp = timestamp;
+	tasks_enumerated = true;
+	zperf_isr_unlock(key);
 }
 
 ZP_USER_CALLED void zperf_trace_history(void)

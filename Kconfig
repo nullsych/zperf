@@ -1,12 +1,18 @@
 menuconfig ZPERF
     bool "zperf runtime analyzer"
     select LOG
-    select THREAD_CUSTOM_DATA
     select THREAD_MONITOR
     select THREAD_NAME
     select TRACING
     help
       Enable the zperf runtime analyzer tool and its Zephyr tracing hooks.
+
+# zperf runs from the TRACING_USER hooks. TRACING_USER is a member of a choice, which
+# 'select' cannot set, so make it the default tracing format instead. Module Kconfig is
+# sourced before subsys/tracing, so this default takes precedence over TRACING_NONE.
+choice TRACING_FORMAT_CHOICE
+    default TRACING_USER if ZPERF
+endchoice
 
 if ZPERF
 
