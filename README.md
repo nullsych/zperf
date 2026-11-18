@@ -2,11 +2,11 @@
 
 `zperf` is a Zephyr RTOS runtime tool analyzer.
 
-It measures per-task execution behavior in microseconds with high-resolution timing. It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
+It measures per-task execution time, reported in microseconds with the resolution of one system tick (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
 
 In addition, it counts context switches per task (`Total Switches`) to reflect scheduling activity and task preemption frequency. The tool aggregates this data over a fixed time interval (typically one second) to provide a system-wide performance snapshot, including `CPU load` distribution across tasks, `Idle time` percentage, and `Kernel` overhead.
 
-⚡️ The result is a simple and precise runtime profiling tool that helps analyze scheduling efficiency, task behavior, and overall system utilization on embedded device:
+⚡️ The result is a simple and lightweight runtime profiling tool that helps analyze scheduling efficiency, task behavior, and overall system utilization on embedded device:
 
 ```
 # #####################   1 Second System Performance   ###################### #
@@ -147,7 +147,13 @@ Each row represents one thread tracked during the sampling window:
 | `Max runtime` | Longest single continuous execution slice observed within the window, in microseconds |
 | `Total Switches` | Number of times the thread was scheduled in during the window |
 
-The footer line `Calculations Time slice` shows the total window duration in microseconds, and the CPU load summary reports `CPU LOAD` (active task time), `IDLE` (idle thread time), and `KERNEL` (scheduling overhead) as percentages of that time slice.
+The footer line `Calculations Time slice` shows the total window duration in microseconds, and the CPU load summary reports `CPU LOAD` (active task time), `IDLE` (idle thread time), and `KERNEL` (window time not booked to any tracked thread, e.g. scheduler overhead or threads that didn't get a free `zperf` slot) as percentages of that time slice. Interrupt time is currently booked to the thread that was interrupted.
+
+### Timing resolution
+
+All timestamps come from `k_uptime_ticks()` converted to microseconds, so the resolution is one system tick, `1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC`. On nRF52 the system timer runs from the 32.768 kHz RTC, which gives about 30.5 µs: values in the tables are multiples of it (31, 61, 92, ...), and a slice shorter than one tick is recorded as 0 or as one tick.
+
+Window totals stay accurate, because consecutive slices share their boundaries and the rounding doesn't accumulate across the window. Per-thread `Total runtime`, and especially `Max runtime` of short slices, should be read with this granularity in mind.
 
 The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The tool integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
 
@@ -157,12 +163,12 @@ The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with 
 * `sys_trace_isr_exit_user()` – called on ISR exit. `zperf` measures ISR execution time and restores task runtime accounting (**paused for now**).
 * `sys_trace_idle_user()` – called when the system enters the idle thread. This allows `zperf` to accurately track idle time and calculate overall CPU utilization.
 
-By leveraging these RTOS-specific hooks, `zperf` continuously monitors task execution time in microseconds, context-switch activity, interrupt processing time, CPU load, idle percentage, and kernel overhead, providing a detailed real-time performance profile of the system.
+By leveraging these RTOS-specific hooks, `zperf` continuously monitors task execution time, context-switch activity, CPU load, idle percentage, and kernel overhead, providing a detailed real-time performance profile of the system.
 
 
 ### Task history
 
-In addition to the per-window statistics, `zperf` maintains a fixed-size circular buffer of raw scheduling events. Each entry captures the thread name, the type of scheduler event, and the hardware timestamp in microseconds at which that event occurred.
+In addition to the per-window statistics, `zperf` maintains a fixed-size circular buffer of raw scheduling events. Each entry captures the thread name, the type of scheduler event, and the uptime timestamp in microseconds at which that event occurred.
 
 The buffer is filled continuously as the scheduler runs and is printed at the end of each sampling window (when `CONFIG_ZPERF_TRACE_HISTORY=y`) or on demand by calling `zperf_trace_history()`. Because the buffer is circular, only the most recent `CONFIG_ZPERF_HISTORY_SIZE` events are retained.
 
@@ -172,7 +178,7 @@ Each row represents one scheduler event:
 |--------|-------------|
 | `Task Name` | Thread name as registered with Zephyr (`CONFIG_THREAD_NAME=y` required) |
 | `State` | Scheduler event type: `IN` — thread scheduled in, `OUT` — thread scheduled out, `ISR_IN` — ISR entered, `ISR_OUT` — ISR exited, `IDLE` — idle thread running |
-| `Timestamp` | Hardware timestamp in microseconds (`k_uptime_ticks` converted to µs) |
+| `Timestamp` | Uptime timestamp in microseconds (`k_uptime_ticks()` converted to µs, so it has system tick resolution) |
 
 ```
 [00:00:07.461,791] <inf> zperf_history: # ############### Collected History ############### #
@@ -255,7 +261,7 @@ This project can be built inside a pre-configured Zephyr Docker environment. Thi
 Run the Zephyr build container and mount your project directory:
 
 ```bash
-docker run --rm -it \
+sudo docker run --rm -it \
     --user root \
     -v $(pwd):/workdir \
     -w /workdir \
