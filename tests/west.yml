@@ -23,5 +23,6 @@ manifest:
         name-allowlist:
           - cmsis_6     # Cortex-M core headers
           - hal_nordic  # nrfx for nRF52
-          - mbedtls     # PSA crypto for BT_SMP in the demo
-          - segger      # RTT log backend in the demo
+          - mbedtls        # PSA crypto for BT_SMP in the demo
+          - tf-psa-crypto  # PSA crypto core, built by the mbedtls module
+          - segger         # RTT log backend in the demo
