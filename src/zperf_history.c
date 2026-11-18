@@ -42,6 +42,14 @@ ZP_LOCAL uint32_t            history_index  = 0U;
  */
 ZP_LOCAL uint32_t            history_size = 0U;
 
+/**
+ * @brief Copy of the history in time order, printed without holding the IRQ lock.
+ * @details Printing takes long, and hooks keep writing the live buffer meanwhile. Shared by
+ * the window print and zperf_trace_history(), so call those from a single thread.
+ */
+ZP_LOCAL zp_hook             history_snapshot[ZP_HISTORY_SIZE];
+ZP_LOCAL uint32_t            history_snapshot_size = 0U;
+
 /*******************************************************************************************************************
 *                                        HISTORY GLOBAL API IMPLEMENTATION                                         *
 *******************************************************************************************************************/
@@ -149,21 +157,54 @@ static const char *task_name_safe(zp_task_id task_id)
 	return (name != NULL) ? name : "?";
 }
 
-ZP_USER_CALLED void history_trace_collected(void)
+/**
+ * @brief Copy the live history to the snapshot in time order, optionally clearing it.
+ * @details Must be called with IRQs locked.
+ */
+ZP_HOOK_CALLED void history_snapshot_take(bool clear)
 {
 	/* Once the buffer has wrapped, the oldest entry sits at history_index */
 	uint32_t start = (history_size < ZP_HISTORY_SIZE) ? 0U : history_index;
 
+	for (uint32_t i = 0; i < history_size; i++) {
+		history_snapshot[i] = history_handler.entities[(start + i) % ZP_HISTORY_SIZE];
+	}
+	history_snapshot_size = history_size;
+
+	if (clear) {
+		history_index = 0U;
+		history_size = 0U;
+	}
+}
+
+/**
+ * @brief Print the last snapshot taken by history_snapshot_take().
+ */
+ZP_USER_CALLED void history_trace_snapshot(void)
+{
 	ZP_TRACE_INFO("# ############ Collected History ############ #");
 	ZP_TRACE_INFO("#                                             #");
 	ZP_TRACE_INFO("# %-20s  %-7s  %11s  #", "Task Name", "State", "Timestamp");
 
-	for (uint32_t i = 0; i < history_size; i++) {
-		const zp_hook *entry = &history_handler.entities[(start + i) % ZP_HISTORY_SIZE];
+	for (uint32_t i = 0; i < history_snapshot_size; i++) {
+		const zp_hook *entry = &history_snapshot[i];
 
 		/* Names longer than the column are truncated to keep the table aligned */
 		ZP_TRACE_INFO("# %-20.20s  %-7s  %11u  #", task_name_safe(entry->task_id),
 			      state_to_str(entry->state), entry->timestamp);
 	}
 	ZP_TRACE_INFO("# ########################################### #\n");
+}
+
+/**
+ * @brief Print the current history on demand, without clearing it.
+ */
+ZP_USER_CALLED void history_trace_collected(void)
+{
+	unsigned int key = ZP_ISR_LOCK();
+
+	history_snapshot_take(false);
+	ZP_ISR_UNLOCK(key);
+
+	history_trace_snapshot();
 }

@@ -105,8 +105,8 @@ ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t t
 ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
 						 uint32_t task_runtime);
 ZP_LOCAL_INLINE void zperf_update_idle_statistic(uint32_t timestamp);
-ZP_LOCAL_INLINE void zperf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime,
-						   zp_task_runtime *task);
+ZP_LOCAL_INLINE void zperf_book_runtime(uint8_t task_iterator, uint32_t timestamp,
+					uint32_t task_runtime);
 
 ZP_LOCAL_INLINE void zperf_reset_trace_cycle_statistic(uint8_t task_iterator);
 ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator);
@@ -340,8 +340,13 @@ ZP_LOCAL void zperf_trace_cpu_usage(uint32_t *time_slice)
 		      cpu_load_per, idle_time_per, os_per);
 }
 
-ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
-						 uint32_t task_runtime)
+/**
+ * @brief Book a piece of a thread's runtime to the window and uptime statistic.
+ * @details Doesn't count a context switch: callers that end a slice without a switch
+ * (idle split at ISR entry, open slice closed at the window end) use it directly.
+ */
+ZP_LOCAL_INLINE void zperf_book_runtime(uint8_t task_iterator, uint32_t timestamp,
+					uint32_t task_runtime)
 {
 	zp_task_runtime *task_ptr = &hook_tasks_statistics[task_iterator];
 
@@ -351,34 +356,41 @@ ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t
 
 	task_ptr->task_timestamp = timestamp;
 	task_ptr->total_runtime += task_runtime;
-	task_ptr->task_switches++;
-
-	zperf_update_uptime_statistic(task_iterator, task_runtime, task_ptr);
-}
-
-ZP_LOCAL_INLINE void zperf_update_idle_statistic(uint32_t timestamp)
-{
-	uint32_t idle_runtime = zperf_get_task_runtime(idle_task_iterator, timestamp);
-	zperf_update_task_statistic(idle_task_iterator, timestamp, idle_runtime);
-}
-
-ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp,
-						 uint32_t isrRuntime)
-{
-}
-
-ZP_LOCAL_INLINE void zperf_update_uptime_statistic(uint8_t task_iterator, uint32_t task_runtime,
-						   zp_task_runtime *task_ptr)
-{
-	ARG_UNUSED(task_ptr);
 
 	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
-	hook_uptime_statistic.tasks_switches[task_iterator]++;
 
 	/* Uptime max is never reset, unlike the per-window max in task_ptr */
 	if (task_runtime > hook_uptime_statistic.max_tasks_runtime[task_iterator]) {
 		hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_runtime;
 	}
+}
+
+/**
+ * @brief Book a finished slice on a context switch out.
+ */
+ZP_LOCAL_INLINE void zperf_update_task_statistic(uint8_t task_iterator, uint32_t timestamp,
+						 uint32_t task_runtime)
+{
+	zperf_book_runtime(task_iterator, timestamp, task_runtime);
+
+	hook_tasks_statistics[task_iterator].task_switches++;
+	hook_uptime_statistic.tasks_switches[task_iterator]++;
+}
+
+/**
+ * @brief Book idle runtime up to timestamp while idle keeps running.
+ * @details Called on ISR entry when idle was running. Idle isn't switched out there, so the
+ * switch counter is left as is: it counts real context switches only, like for other threads.
+ */
+ZP_LOCAL_INLINE void zperf_update_idle_statistic(uint32_t timestamp)
+{
+	uint32_t idle_runtime = zperf_get_task_runtime(idle_task_iterator, timestamp);
+	zperf_book_runtime(idle_task_iterator, timestamp, idle_runtime);
+}
+
+ZP_LOCAL_INLINE void zperf_update_isrs_statistic(uint8_t isrIterator, uint32_t timestamp,
+						 uint32_t isrRuntime)
+{
 }
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key)
@@ -406,26 +418,13 @@ ZP_LOCAL void zperf_trace_uptime_statistic(void)
 ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp)
 {
 	uint8_t task_iterator = zperf_task_lookup(wr_get_task_id());
-	zp_task_runtime *task_ptr;
-	uint32_t task_runtime;
 
 	if (!tasks_enumerated || !TASK_IS_VALID(task_iterator)) {
 		return;
 	}
 
-	task_ptr = &hook_tasks_statistics[task_iterator];
-	task_runtime = zperf_get_task_runtime(task_iterator, timestamp);
-
-	task_ptr->total_runtime += task_runtime;
-	task_ptr->task_timestamp = timestamp;
-	if (task_runtime > task_ptr->max_runtime) {
-		task_ptr->max_runtime = task_runtime;
-	}
-
-	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
-	if (task_runtime > hook_uptime_statistic.max_tasks_runtime[task_iterator]) {
-		hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_runtime;
-	}
+	zperf_book_runtime(task_iterator, timestamp,
+			   zperf_get_task_runtime(task_iterator, timestamp));
 }
 
 /**
@@ -446,6 +445,8 @@ ZP_LOCAL uint32_t zperf_cycle_backup(void)
 	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
 		zperf_reset_hooks_statistic(task_iterator);
 	}
+	/* The history window ends at the same point as the statistic window */
+	history_snapshot_take(true);
 	zperf_isr_unlock(key);
 
 	return timestamp;
@@ -534,11 +535,10 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 #endif
 
 #if (ZP_CFG_TRACE_HISTORY == ZP_CFG_ON)
-	history_trace_collected();
+	history_trace_snapshot();
 #endif
 
-	/* Hook statistic was already reset atomically in zperf_cycle_backup() */
-	history_clear();
+	/* Hook statistic and history were already reset atomically in zperf_cycle_backup() */
 }
 
 ZP_USER_CALLED void zperf_pre_scheduler_init(void)
