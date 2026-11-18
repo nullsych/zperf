@@ -81,6 +81,7 @@ ZP_LOCAL uint32_t zperf_get_system_runtime(void);
 ZP_LOCAL uint32_t zperf_get_idle_runtime(void);
 
 ZP_LOCAL uint32_t zperf_cycle_backup(void);
+ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp);
 
 ZP_LOCAL void zperf_isr_lock(unsigned int *key);
 ZP_LOCAL void zperf_isr_unlock(unsigned int key);
@@ -280,13 +281,18 @@ ZP_LOCAL void zperf_trace_cpu_usage(uint32_t *time_slice)
 	 * task */
 	system_total_runtime = zperf_get_system_runtime() - idle_total_runtime;
 
-	/* Calculate RTOS's resources total runtime */
-	os_total_runtime = (*time_slice) - (system_total_runtime + idle_total_runtime);
+	/* Calculate RTOS's resources total runtime. Tick rounding can make the measured runtime
+	 * slightly exceed the window, so clamp instead of letting the subtraction wrap around. */
+	if ((system_total_runtime + idle_total_runtime) < (*time_slice)) {
+		os_total_runtime = (*time_slice) - (system_total_runtime + idle_total_runtime);
+	} else {
+		os_total_runtime = 0U;
+	}
 
 	/* Calculate percentages */
-	idle_time_per = (uint8_t)GET_CPU_PERCENT((*time_slice), idle_total_runtime);
-	cpu_load_per = (uint8_t)GET_CPU_PERCENT((*time_slice), system_total_runtime);
-	os_per = (uint8_t)GET_CPU_PERCENT((*time_slice), os_total_runtime);
+	idle_time_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), idle_total_runtime), 100U);
+	cpu_load_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), system_total_runtime), 100U);
+	os_per = (uint8_t)MIN(GET_CPU_PERCENT((*time_slice), os_total_runtime), 100U);
 
 	ZP_TRACE_INFO("# ################# CPU LOAD %d%% ### IDLE %d%% ### KERNEL %d%% "
 		      "################## #\n",
@@ -350,6 +356,38 @@ ZP_LOCAL void zperf_trace_uptime_statistic(void)
 }
 
 /**
+ * @brief Book the running thread's open slice up to the window end.
+ * @details Without this, a slice crossing the window boundary is booked whole to the window
+ * where the thread is switched out, so that window can exceed 100%. The remainder of the slice
+ * is counted from the window end on switch out. It is not a context switch, so the switch
+ * counter is left as is. Must be called with IRQs locked.
+ */
+ZP_LOCAL void zperf_close_running_slice(uint32_t timestamp)
+{
+	uint8_t task_iterator = wr_get_task_iterator(wr_get_task_id());
+	zp_task_runtime *task_ptr;
+	uint32_t task_runtime;
+
+	if (!tasks_enumerated || !TASK_IS_VALID(task_iterator)) {
+		return;
+	}
+
+	task_ptr = &hook_tasks_statistics[task_iterator];
+	task_runtime = zperf_get_task_runtime(task_iterator, timestamp);
+
+	task_ptr->total_runtime += task_runtime;
+	task_ptr->task_timestamp = timestamp;
+	if (task_runtime > task_ptr->max_runtime) {
+		task_ptr->max_runtime = task_runtime;
+	}
+
+	hook_uptime_statistic.tasks_runtime[task_iterator] += task_runtime;
+	if (task_runtime > hook_uptime_statistic.max_tasks_runtime[task_iterator]) {
+		hook_uptime_statistic.max_tasks_runtime[task_iterator] = task_runtime;
+	}
+}
+
+/**
  * @brief Snapshot the window statistic and start a new window in one atomic step.
  * @details Copy and reset must happen under the same lock, otherwise events arriving
  * between them are lost. The window end timestamp is taken there as well.
@@ -361,6 +399,7 @@ ZP_LOCAL uint32_t zperf_cycle_backup(void)
 
 	zperf_isr_lock(&key);
 	timestamp = wr_get_uptime_timestamp();
+	zperf_close_running_slice(timestamp);
 	memcpy(&window_tasks_statistic, &hook_tasks_statistics, sizeof(hook_tasks_statistics));
 	memcpy(&window_uptime_statistic, &hook_uptime_statistic, sizeof(hook_uptime_statistic));
 	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
@@ -403,14 +442,13 @@ ZP_LOCAL void zperf_reset_runtime_statistic(void)
 ZP_LOCAL_INLINE void zperf_reset_trace_cycle_statistic(uint8_t task_iterator)
 {
 	window_tasks_statistic[task_iterator].max_runtime = 0u;
-	window_tasks_statistic[task_iterator].max_runtime = 0u;
 	window_tasks_statistic[task_iterator].task_switches = 0u;
 	window_tasks_statistic[task_iterator].total_runtime = 0u;
 }
 
 ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator)
 {
-	hook_tasks_statistics[task_iterator].max_runtime = 0u;
+	/* task_timestamp is kept: it is the start of the running thread's open slice */
 	hook_tasks_statistics[task_iterator].max_runtime = 0u;
 	hook_tasks_statistics[task_iterator].task_switches = 0u;
 	hook_tasks_statistics[task_iterator].total_runtime = 0u;

@@ -27,7 +27,10 @@
 #define ZP_ISR_ID_SIGN (0xFFFC) /* Common ISR signature */
 
 #define TASK_IS_VALID(task_iterator) ((task_iterator < ZP_TASK_COUNT) && (task_iterator >= 0))
-#define GET_CPU_PERCENT(time_slice, total_rt) ((total_rt * 100U) / time_slice)
+/* 64-bit math: total_rt * 100 overflows uint32_t for windows longer than ~43 s */
+#define GET_CPU_PERCENT(time_slice, total_rt)                                                      \
+	(((time_slice) == 0U) ? 0U                                                                 \
+			      : (uint32_t)(((uint64_t)(total_rt) * 100U) / (uint64_t)(time_slice)))
 
 /*******************************************************************************************************************
  *                                            RTOS HOOKS
