@@ -1,6 +1,6 @@
 /**
  * @file   zperf_startup.c
- * @brief  Implementation of wrappers that encapsulate Zephyr-specific API.
+ * @brief  Implementation of wrappers (wr_*) that encapsulate Zephyr-specific API.
  * @author nullsych
  * @date   Jul 18, 2024
  *
@@ -58,6 +58,23 @@ ZP_RTOS_WRAPPER uint8_t wr_get_task_iterator(uint32_t task_id)
 ZP_RTOS_WRAPPER const char *wr_get_task_name(uint32_t task_id)
 {
 	return k_thread_name_get((k_tid_t)task_id);
+}
+
+/**
+ * @brief Check that task_id is the RTOS idle thread running in thread context.
+ * @note Zephyr calls the idle trace hook from arch_cpu_atomic_idle() too, which drivers use
+ * outside the idle thread (nRF LF clock start before the kernel runs, entropy and radio
+ * drivers). Only the idle thread may run at K_IDLE_PRIO, so the priority identifies it.
+ */
+ZP_RTOS_WRAPPER bool wr_is_idle_task(uint32_t task_id)
+{
+	k_tid_t thread = (k_tid_t)task_id;
+
+	if (k_is_pre_kernel() || k_is_in_isr() || (thread == NULL)) {
+		return false;
+	}
+
+	return thread->base.prio == K_IDLE_PRIO;
 }
 
 /**

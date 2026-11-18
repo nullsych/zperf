@@ -12,6 +12,7 @@
 /*******************************************************************************************************************
  *                                                STD HEADERS
  *******************************************************************************************************************/
+#include <stdbool.h>
 #include <stdint.h>
 
 /*******************************************************************************************************************
@@ -28,5 +29,6 @@ extern ZP_RTOS_WRAPPER void wr_init_configuration(void);
 extern ZP_RTOS_WRAPPER uint8_t wr_get_task_iterator(uint32_t);
 extern ZP_RTOS_WRAPPER const char *wr_get_task_name(uint32_t);
 extern ZP_RTOS_WRAPPER uint32_t wr_get_uptime_timestamp(void);
+extern ZP_RTOS_WRAPPER bool wr_is_idle_task(uint32_t);
 
 #endif /* ZEPHYR_WRAPPER_H */

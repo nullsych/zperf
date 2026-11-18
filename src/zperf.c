@@ -48,6 +48,17 @@ ZP_LOCAL uint8_t                    idle_task_iterator = ZP_UNINIT;
 ZP_LOCAL uint32_t                   idle_task_id       = ZP_UNINIT;
 
 /**
+ * @brief Set once every thread got its zperf iterator. Until then custom_data is 0 for all
+ * threads, and hooks would book their runtime to task 0.
+ */
+ZP_LOCAL volatile bool              tasks_enumerated   = false;
+
+/**
+ * @brief Start of the current statistic window.
+ */
+ZP_LOCAL uint32_t                   window_start_timestamp = 0U;
+
+/**
  * @brief Store a copy of uptime statistic when zperf_cycle_backup() routine occurs.
  * @details Used to trace all collected information to avoid race condition in rescheduling points.
  */
@@ -96,6 +107,10 @@ ZP_LOCAL_INLINE void zperf_reset_hooks_statistic(uint8_t task_iterator);
 
 ZP_RTOS_CALLED void pre_task_hook(void)
 {
+	if (!tasks_enumerated) {
+		return;
+	}
+
 	uint32_t timestamp = wr_get_uptime_timestamp();
 	uint32_t task_id = wr_get_task_id();
 	uint8_t task_iterator = wr_get_task_iterator(task_id);
@@ -119,6 +134,10 @@ ZP_RTOS_CALLED void post_task_hook(void)
 	uint32_t task_id = 0;
 	uint32_t task_runtime = 0;
 	uint32_t timestamp = 0;
+
+	if (!tasks_enumerated) {
+		return;
+	}
 
 	task_id = wr_get_task_id();
 	task_iterator = wr_get_task_iterator(task_id);
@@ -166,17 +185,29 @@ ZP_RTOS_CALLED void post_isr_hook(void)
 
 ZP_RTOS_CALLED void idle_task_running(void)
 {
-	static bool idle_not_determined = true;
+	uint32_t task_id;
+	uint8_t task_iterator;
 
-	if (idle_not_determined) {
-		idle_task_id = wr_get_task_id();
-		idle_task_iterator = wr_get_task_iterator(idle_task_id);
-		idle_not_determined = false;
+	if (!tasks_enumerated) {
+		return;
 	}
 
-	if (idle_task_iterator != ZP_UNINIT && idle_task_id != ZP_UNINIT) {
-		history_update(idle_task_id, wr_get_uptime_timestamp(), IDLE_STATE_RUNNING);
+	task_id = wr_get_task_id();
+
+	/* The hook also fires from drivers outside the idle thread, ignore those calls */
+	if (!wr_is_idle_task(task_id)) {
+		return;
 	}
+
+	/* Re-read every time: the iterator is assigned only once threads are enumerated */
+	task_iterator = wr_get_task_iterator(task_id);
+	if (!TASK_IS_VALID(task_iterator)) {
+		return;
+	}
+
+	idle_task_id = task_id;
+	idle_task_iterator = task_iterator;
+	history_update(task_id, wr_get_uptime_timestamp(), IDLE_STATE_RUNNING);
 }
 
 /*******************************************************************************************************************
@@ -404,13 +435,12 @@ ZP_USER_CALLED void zperf_runtime_overall_statistic(void)
 {
 	uint32_t time_slice = 0;
 	uint32_t curr_timestamp = 0;
-	static uint32_t last_timestamp = 0U;
 
 	curr_timestamp = zperf_cycle_backup();
 
 	/* Calculate time_slice */
-	time_slice = zperf_get_timestamp_delta(last_timestamp, curr_timestamp);
-	last_timestamp = curr_timestamp;
+	time_slice = zperf_get_timestamp_delta(window_start_timestamp, curr_timestamp);
+	window_start_timestamp = curr_timestamp;
 
 #if (ZP_CFG_TRACE_MAIN_STAT == ZP_CFG_ON)
 	zperf_trace_cycle_statistic(&time_slice);
@@ -440,7 +470,20 @@ ZP_USER_CALLED void zperf_pre_scheduler_init(void)
 
 ZP_USER_CALLED void zperf_post_scheduler_init(void)
 {
+	unsigned int key;
+	uint32_t timestamp;
+
 	wr_init_configuration();
+
+	/* Start accounting from now: hooks were ignored so far, so no task has a valid start time */
+	zperf_isr_lock(&key);
+	timestamp = wr_get_uptime_timestamp();
+	for (uint8_t task_iterator = 0; task_iterator < ZP_TASK_COUNT; task_iterator++) {
+		hook_tasks_statistics[task_iterator].task_timestamp = timestamp;
+	}
+	window_start_timestamp = timestamp;
+	tasks_enumerated = true;
+	zperf_isr_unlock(key);
 }
 
 ZP_USER_CALLED void zperf_trace_history(void)
