@@ -4,7 +4,7 @@
 
 `zperf` is a Zephyr RTOS runtime tool analyzer.
 
-It measures per-task execution time, reported in microseconds with the resolution of one system tick (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
+It measures per-task execution time in microseconds, using the CPU cycle counter (DWT on Cortex-M) by default (see [Timing resolution](#timing-resolution)). It tracks each task’s accumulated runtime `Total runtime`, including total CPU time spent executing, as well as the maximum continuous execution slice observed within the sampling window!
 
 In addition, it counts context switches per task (`Total Switches`) to reflect scheduling activity and task preemption frequency. The tool aggregates this data over a fixed time interval (typically one second) to provide a system-wide performance snapshot, including `CPU load` distribution across tasks, `Idle time` percentage, and `Kernel` overhead.
 
@@ -158,9 +158,16 @@ The footer line `Calculations Time slice` shows the total window duration in mic
 
 ### Timing resolution
 
-All timestamps come from `k_uptime_ticks()` converted to microseconds, so the resolution is one system tick, `1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC`. On nRF52 the system timer runs from the 32.768 kHz RTC, which gives about 30.5 µs: values in the tables are multiples of it (31, 61, 92, ...), and a slice shorter than one tick is recorded as 0 or as one tick.
+All values are in microseconds. The clock behind them is chosen with `CONFIG_ZPERF_TIMESTAMP_SOURCE`:
 
-Window totals stay accurate, because consecutive slices share their boundaries and the rounding doesn't accumulate across the window. Per-thread `Total runtime`, and especially `Max runtime` of short slices, should be read with this granularity in mind.
+| Option | Clock | Resolution |
+|--------|-------|------------|
+| `CONFIG_ZPERF_TIMESTAMP_TIMING_FUNCTIONS` (default) | Cycle counter of the Zephyr [timing functions](https://docs.zephyrproject.org/latest/kernel/timing_functions/index.html): DWT `CYCCNT` on Cortex-M | 1 µs while the CPU runs, one tick across sleep |
+| `CONFIG_ZPERF_TIMESTAMP_UPTIME_TICKS` | `k_uptime_ticks()` | One system tick, `1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC` (about 30.5 µs on nRF52) |
+
+The cycle counter alone isn't a reliable clock: on Cortex-M it typically stops while the CPU sleeps in the idle thread, and it wraps quickly (about every 67 s at 64 MHz). So zperf advances its clock by the cycles counted since the previous reading and keeps it within the current kernel tick: it never falls behind the tick clock (it catches up after sleep) and never runs a full tick ahead of it. Threads are therefore timed to the microsecond, and only idle periods that include sleep are rounded to ticks. The model lives in the RTOS-agnostic `src/zperf_clock.c` and is covered by unit tests, including simulated sleep and oscillator drift.
+
+With `CONFIG_ZPERF_TIMESTAMP_UPTIME_TICKS`, values in the tables are multiples of the tick (31, 61, 92, ... on nRF52) and a slice shorter than one tick is recorded as 0 or as one tick. Window totals stay accurate in both modes, because consecutive slices share their boundaries and the rounding doesn't accumulate across the window.
 
 The tool relies on Zephyr RTOS tracing hooks to collect runtime statistics with minimal overhead. The tool integrates with the scheduler and interrupt tracing infrastructure through the following user hooks:
 
@@ -185,7 +192,7 @@ Each row represents one scheduler event:
 |--------|-------------|
 | `Task Name` | Thread name as registered with Zephyr (`CONFIG_THREAD_NAME=y` required) |
 | `State` | Scheduler event type: `IN` — thread scheduled in, `OUT` — thread scheduled out, `ISR_IN` — ISR entered, `ISR_OUT` — ISR exited, `IDLE` — idle thread running |
-| `Timestamp` | Uptime timestamp in microseconds (`k_uptime_ticks()` converted to µs, so it has system tick resolution) |
+| `Timestamp` | Uptime timestamp in microseconds, from the clock described in [Timing resolution](#timing-resolution) |
 
 ```
 [00:00:02.273,742] <inf> zperf_history: # ############ Collected History ############ #

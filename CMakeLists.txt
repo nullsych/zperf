@@ -11,6 +11,7 @@ if(CONFIG_ZPERF)
     zephyr_library_sources(
         src/zperf.c
         src/zperf_history.c
+        src/zperf_clock.c
         wrapper/rtos_wrapper.c
         map/rtos_hooks.c
     )

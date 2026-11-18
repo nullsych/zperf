@@ -117,6 +117,10 @@ const char *wr_get_task_name(zp_task_id task_id)
 	return (thread != NULL) ? thread->name : NULL;
 }
 
+void wr_timestamp_init(void)
+{
+}
+
 uint32_t wr_get_uptime_timestamp(void)
 {
 	return now_us;

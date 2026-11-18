@@ -27,4 +27,10 @@ common:
       - "zperf_history: # busy_worker +(IN|OUT) +[0-9]+"
 
 tests:
+  # Cycle counter timestamps (default), 10 ms kernel ticks
   zperf.smoke: {}
+  # Tick timestamps: needs 100 us ticks to resolve the worker's 2 ms busy periods
+  zperf.smoke.uptime_ticks:
+    extra_configs:
+      - CONFIG_ZPERF_TIMESTAMP_UPTIME_TICKS=y
+      - CONFIG_SYS_CLOCK_TICKS_PER_SEC=10000

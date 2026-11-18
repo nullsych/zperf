@@ -16,6 +16,29 @@ endchoice
 
 if ZPERF
 
+choice ZPERF_TIMESTAMP_SOURCE
+    prompt "Timestamp source"
+    default ZPERF_TIMESTAMP_TIMING_FUNCTIONS
+    help
+      Clock zperf uses to time threads.
+
+config ZPERF_TIMESTAMP_TIMING_FUNCTIONS
+    bool "Cycle counter (timing functions)"
+    select TIMING_FUNCTIONS
+    help
+      Use the cycle counter of the Zephyr timing functions (DWT CYCCNT on Cortex-M) for
+      microsecond resolution. The counter may stop while the CPU sleeps, so zperf keeps it in
+      step with the kernel tick clock: time is measured at counter resolution while the CPU
+      runs, and at tick resolution across sleep.
+
+config ZPERF_TIMESTAMP_UPTIME_TICKS
+    bool "Kernel uptime ticks"
+    help
+      Use k_uptime_ticks() only. Resolution is one system tick
+      (1 / CONFIG_SYS_CLOCK_TICKS_PER_SEC, about 30.5 us on nRF52).
+
+endchoice
+
 config ZPERF_TRACE_MAIN_STAT
     bool "Trace per-cycle thread runtime statistics"
     default y
